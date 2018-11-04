@@ -69,6 +69,10 @@
 #include "services/tanklevel/tanklevel.h"
 #endif
 
+#ifdef SPOTLIGHT_SUPPORT
+#include "services/spotlight/spotlight.h"
+#endif
+
 struct eeprom_config_t
 {
 #ifdef ETHERNET_SUPPORT
@@ -142,6 +146,10 @@ struct eeprom_config_t
 
 #ifdef TANKLEVEL_SUPPORT
   tanklevel_params_t tanklevel_params;
+#endif
+
+#ifdef SPOTLIGHT_SUPPORT
+  spotlight_params_t spotlight_params;
 #endif
   uint8_t crc;
 };

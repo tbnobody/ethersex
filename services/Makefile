@@ -12,6 +12,7 @@ SUBSUBDIRS += services/ntp
 SUBSUBDIRS += services/wol
 SUBSUBDIRS += services/motd
 SUBSUBDIRS += services/moodlight
+SUBSUBDIRS += services/spotlight
 SUBSUBDIRS += services/stella
 SUBSUBDIRS += services/starburst
 SUBSUBDIRS += services/tanklevel

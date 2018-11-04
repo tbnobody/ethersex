@@ -1,0 +1,10 @@
+dep_bool_menu "Spotlight: Multichannel pwm" SPOTLIGHT_SUPPORT $MQTT_SUPPORT $I2C_PCA9685_SUPPORT $ARCH_AVR
+	int "Prescaler" SPOTLIGHT_PCA9685_PRESCALER 30
+	bool "External Driver" SPOTLIGHT_PCA9685_EXTDRV y
+	bool "Inverted PWM"  SPOTLIGHT_PCA9685_IVRT n
+	bool "Strobo Effect"  SPOTLIGHT_PCA9685_STROBO y
+	if [ "$SPOTLIGHT_PCA9685_STROBO" = "y" ]; then
+		define_bool PCA9685_OUTPUT_ENABLE y
+	fi
+	bool "Debug" SPOTLIGHT_DEBUG
+endmenu

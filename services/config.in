@@ -14,6 +14,7 @@ source services/motd/config.in
 source services/httpd/config.in
 source services/jabber/config.in
 source services/moodlight/config.in
+source services/spotlight/config.in
 source services/stella/config.in
 source services/starburst/config.in
 source services/curtain/config.in
