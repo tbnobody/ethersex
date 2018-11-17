@@ -311,9 +311,9 @@ spotlight_main(void)
 		uint16_t pca9685_values[SPOTLIGHT_CHANNELS * 3]; // 3 colors / channel
 		for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
 			channels[i].update = SPOTLIGHT_NOUPDATE;
-			pca9685_values[3 * i + 0] = pgm_read_word_near(cie_luminance_12bit + channels[i].value.b);
+			pca9685_values[3 * i + 0] = pgm_read_word_near(cie_luminance_12bit + channels[i].value.r);
 			pca9685_values[3 * i + 1] = pgm_read_word_near(cie_luminance_12bit + channels[i].value.g);
-			pca9685_values[3 * i + 2] = pgm_read_word_near(cie_luminance_12bit + channels[i].value.r);
+			pca9685_values[3 * i + 2] = pgm_read_word_near(cie_luminance_12bit + channels[i].value.b);
 		}
 
 		i2c_pca9685_set_leds_fast(SPOTLIGHT_PCA9685_ADDRESS_1, 0,
