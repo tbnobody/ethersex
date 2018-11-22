@@ -2,16 +2,16 @@ dnl   Copyright (c) 2008 by Jochen Roessner <jochen@lugrot.de>
 dnl   This program is free software; you can redistribute it and/or modify
 dnl   it under the terms of the GNU General Public License version 2 or later
 dnl   as published by the Free Software Foundation.
-dnl  
+dnl
 dnl   This program is distributed in the hope that it will be useful,
 dnl   but WITHOUT ANY WARRANTY; without even the implied warranty of
 dnl   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 dnl   GNU General Public License for more details.
-dnl  
+dnl
 dnl   You should have received a copy of the GNU General Public License
 dnl   along with this program; if not, write to the Free Software
 dnl   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-dnl  
+dnl
 dnl   For more information on the GPL, please go to:
 dnl   http://www.gnu.org/copyleft/gpl.html
 dnl
@@ -25,7 +25,7 @@ CONTROL_START
 dnl // dnl ist der kommentar fuer m4. Zum aktivieren der beispiele einfach das dnl entfernen.
 
 dnl  // dieses Beispiel zeigt anhand meiner Heizungssteuerung wie man zeitverzoegert die Wasserheizung
-dnl  // schaltet. Das geschieht bei einer Temperatur groesser als 55,0 Grad und nur zwischen 6 und 11 Uhr 
+dnl  // schaltet. Das geschieht bei einer Temperatur groesser als 55,0 Grad und nur zwischen 6 und 11 Uhr
 dnl  THREAD(warmwasser_high)
 dnl      WAIT(60 * 15);
 dnl      PIN_SET(Warmwasser);
@@ -39,7 +39,7 @@ dnl  ON ONCE CLOCK_MIN && CLOCK_HOUR > 6 && CLOCK_HOUR < 19 && KTY_GET(Wasser) <
 dnl    PIN_CLEAR(Warmwasser);
 dnl  END
 
-dnl  // ein Thread der in einer Endlosschleife mit 5 Sekunden Verzoegerung laeuft 
+dnl  // ein Thread der in einer Endlosschleife mit 5 Sekunden Verzoegerung laeuft
 dnl  // definiert eine globale Variable
 dnl  GLOBAL(lastzulauf, uint16_t);
 dnl  THREAD(zulauf)
@@ -110,6 +110,58 @@ dnl END
 dnl // die ecmd syntax ist "c6 get Wassersoll" oder "c6 set Wassersoll 255"
 dnl // die werte koennen von 0 bis 255 gehen.
 
+THREAD(uptime)
+	uint32_t working_minutes = clock_get_uptime() / 60;
+    int d = (int)(working_minutes / 1440);
+    int m = (int)(working_minutes % 1440);
+
+	TTY_SELECT(uptime)
+	TTY_HOME()
+    TTY_WRITE(`"Up: %u days, %02u:%02u"', d, m / 60, m % 60);
+
+	WAIT(2)
+THREAD_END(uptime)
+
+THREAD(ipaddr)
+	uip_ipaddr_t hostaddr;
+	uip_gethostaddr(&hostaddr);
+
+	TTY_SELECT(ipaddr)
+	TTY_HOME()
+
+	uint8_t *ip = (uint8_t *) hostaddr;
+	TTY_WRITE(`"IP: %u.%u.%u.%u"', ip[0], ip[1], ip[2], ip[3]);
+
+	WAIT(2)
+THREAD_END(ipaddr)
+
+THREAD(mqtt)
+	TTY_SELECT(mqtt)
+	TTY_HOME()
+
+	if (mqtt_is_connected()) {
+		TTY_WRITE(`"MqTT: Connected   "')
+	}
+	else {
+		TTY_WRITE(`"MqTT: Disconnected"')
+	}
+
+	WAIT(2)
+THREAD_END(mqtt)
+
+ON STARTUP DO
+	dnl Initialize display and write out greeting
+    TTY_CLEAR()
+    TTY_HOME()
+
+	TTY_CREATE_WINDOW(uptime, 1, 20, 0, 0)
+	TTY_CREATE_WINDOW(ipaddr, 1, 20, 1, 0)
+	TTY_CREATE_WINDOW(mqtt,   1, 20, 2, 0)
+
+	THREAD_START(uptime)
+	THREAD_START(ipaddr)
+	THREAD_START(mqtt)
+END
 
 CONTROL_END
 
