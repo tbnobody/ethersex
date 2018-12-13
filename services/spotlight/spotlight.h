@@ -43,6 +43,7 @@
 #define IPADDR_LEN sizeof(uip_ipaddr_t)
 
 #define SPOTLIGHT_VALUESIZE 16
+#define SPOTLIGHT_TOPICSIZE 32
 
 enum spotlight_update {
 	SPOTLIGHT_UPDATE,
@@ -75,7 +76,7 @@ typedef struct {
 	uint8_t mqtt_ip[IPADDR_LEN];
 	char mqtt_user[SPOTLIGHT_VALUESIZE];
 	char mqtt_pass[SPOTLIGHT_VALUESIZE];
-	char mqtt_topic[SPOTLIGHT_VALUESIZE];
+	char mqtt_topic[SPOTLIGHT_TOPICSIZE];
 	uint8_t dmx_offset;
 } spotlight_params_t;
 

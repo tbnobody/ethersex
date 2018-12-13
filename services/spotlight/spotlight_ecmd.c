@@ -94,7 +94,7 @@ parse_cmd_mqtt_topic(char *cmd, char *output, uint16_t len)
 	if (*cmd != '\0') {
 		strncpy(spotlight_params_ram.mqtt_topic, cmd, sizeof(spotlight_params_ram.mqtt_topic));
 		spotlight_params_ram.mqtt_topic[sizeof(spotlight_params_ram.mqtt_topic) - 1] = '\0';
-		eeprom_save(spotlight_params.mqtt_topic, spotlight_params_ram.mqtt_topic, SPOTLIGHT_VALUESIZE);
+		eeprom_save(spotlight_params.mqtt_topic, spotlight_params_ram.mqtt_topic, SPOTLIGHT_TOPICSIZE);
 		eeprom_update_chksum();
 		return ECMD_FINAL_OK;
 	}
