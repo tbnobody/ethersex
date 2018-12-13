@@ -31,13 +31,19 @@ ifdef({{conf_JABBER}}, {{dnl
 	getCmd('jabber_resrc', writeVal, $('jabber_resrc'));
 	getCmd('jabber_host', writeVal, $('jabber_host'));
 }})dnl
+ifdef({{conf_SPOTLIGHT}}, {{dnl
+	getCmd('spotlight mqtt ip', writeVal, $('spotlight_mqtt_ip'));
+	getCmd('spotlight mqtt user', writeVal, $('spotlight_mqtt_user'));
+	getCmd('spotlight mqtt pass', writeVal, $('spotlight_mqtt_pass'));
+	getCmd('spotlight mqtt topic', writeVal, $('spotlight_mqtt_topic'));
+}})dnl
 
 }
 
 function getCmd(cmd, handler, data) {
 	ArrAjax.ecmd(cmd, handler, 'GET', data);
 }
-	
+
 function setCmd(cmd, value) {
 	ArrAjax.ecmd(cmd + ' ' + value);
 }
@@ -45,7 +51,7 @@ function setCmd(cmd, value) {
 function writeVal(request, data) {
 	data.value = request.responseText;
 }
-	
+
 function changeState(request, data) {
 	data.style.backgroundColor = (request.responseText == "OK\n") ? "green" : "red";
 }
@@ -106,7 +112,7 @@ ifdef({{conf_SMS77}},{{dnl
 	<tr>
 	<td>SMS Receiver</td>
 	<td><input type="text" id="sms77_recv" onChange='getCmd("sms77_recv" + this.value, changeState, this);'></td>
-	</tr>	
+	</tr>
 }})dnl
 ifdef({{conf_JABBER_EEPROM}},{{dnl
 	<tr>
@@ -120,10 +126,28 @@ ifdef({{conf_JABBER_EEPROM}},{{dnl
 	<tr>
 	<td>JABBER Resource</td>
 	<td><input type="text" id="jabber_resrc" onChange='getCmd("jabber_resrc" + this.value, changeState, this);'></td>
-	</tr>	
+	</tr>
 	<tr>
 	<td>JABBER Hostname</td>
 	<td><input type="text" id="jabber_host" onChange='getCmd("jabber_host" + this.value, changeState, this);'></td>
+	</tr>
+}})dnl
+ifdef({{conf_SPOTLIGHT}},{{dnl
+	<tr>
+	<td>Spotlight MqTT Broker IP</td>
+	<td><input type="text" id="spotlight_mqtt_ip" onChange='getCmd("spotlight mqtt ip " + this.value, changeState, this);'></td>
+	</tr>
+	<tr>
+	<td>Spotlight MqTT User</td>
+	<td><input type="text" id="spotlight_mqtt_user" onChange='getCmd("spotlight mqtt user " + this.value, changeState, this);'></td>
+	</tr>
+	<tr>
+	<td>Spotlight MqTT Password</td>
+	<td><input type="text" id="spotlight_mqtt_pass" onChange='getCmd("spotlight mqtt pass " + this.value, changeState, this);'></td>
+	</tr>
+	<tr>
+	<td>Spotlight MqTT Topic Prefix</td>
+	<td><input type="text" id="spotlight_mqtt_topic" onChange='getCmd("spotlight mqtt topic " + this.value, changeState, this);'></td>
 	</tr>
 }})dnl
 	<tr>
