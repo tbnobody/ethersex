@@ -122,10 +122,10 @@
 // BUFFER VARIABLES
 
 static uint8_t mqtt_send_buffer[MQTT_SENDBUFFER_LENGTH];
-static uint8_t mqtt_send_buffer_last_length;    // length of last packet
+static uint16_t mqtt_send_buffer_last_length;    // length of last packet
                                               //   (for uip-retransmit)
-static uint8_t mqtt_send_buffer_current_head;   // current buffer head
-static uint8_t mqtt_receive_buffer_length;      // length of data for received buffer
+static uint16_t mqtt_send_buffer_current_head;   // current buffer head
+static uint16_t mqtt_receive_buffer_length;      // length of data for received buffer
 static uint16_t mqtt_receive_packet_length;     // length of next expected
                                               //   (not fully received) packet
 

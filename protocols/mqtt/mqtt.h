@@ -41,7 +41,7 @@
 // don't increase this one over 256 without increasing the state variables in
 // mqtt.c to 16 bit
 #ifndef MQTT_SENDBUFFER_LENGTH
-#define MQTT_SENDBUFFER_LENGTH 256
+#define MQTT_SENDBUFFER_LENGTH 512
 #endif
 
 
