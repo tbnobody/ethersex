@@ -59,14 +59,20 @@ typedef struct {
 	uint8_t r;
 	uint8_t g;
 	uint8_t b;
-} spotlight_color_t;
+} spotlight_rgb_color_t;
+
+typedef struct {
+	double h;
+	double s;
+	double v;
+} spotlight_hsv_color_t;
 
 typedef struct
 {
   //Current value
-  spotlight_color_t value;
+  spotlight_rgb_color_t value;
   //Target value
-  spotlight_color_t target;
+  spotlight_rgb_color_t target;
   enum spotlight_mode mode;
   enum spotlight_update update;
   enum spotlight_update sendUpdate;

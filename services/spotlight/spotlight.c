@@ -110,6 +110,110 @@ static mqtt_connection_config_t mqtt_connection_config =
 	.will_message_length = 0
 };
 
+double
+twoway_max(double a, double b)
+{
+	return a > b ? a : b;
+}
+
+double
+twoway_min(double a, double b)
+{
+	return a < b ? a : b;
+}
+
+double
+threeway_max(double a, double b, double c)
+{
+    return twoway_max(a, twoway_max(b, c));
+}
+
+double
+threeway_min(double a, double b, double c)
+{
+    return twoway_min(a, twoway_min(b, c));
+}
+
+/**
+ * Converts an HSV color value to RGB. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSV_color_space.
+ * Assumes h, s, and v are contained in the set [0, 1] and
+ * returns r, g, and b in the set [0, 255].
+ *
+ * @param   Number  h       The hue
+ * @param   Number  s       The saturation
+ * @param   Number  v       The value
+ * @return  Array           The RGB representation
+ */
+static void
+hsvToRgb(spotlight_hsv_color_t hsv, spotlight_rgb_color_t *rgb)
+{
+    double r, g, b;
+
+    int i = hsv.h * 6;
+    double f = hsv.h * 6 - i;
+    double p = hsv.v * (1 - hsv.s);
+    double q = hsv.v * (1 - f * hsv.s);
+    double t = hsv.v * (1 - (1 - f) * hsv.s);
+
+    switch(i % 6){
+        case 0: r = hsv.v, g = t, b = p; break;
+        case 1: r = q, g = hsv.v, b = p; break;
+        case 2: r = p, g = hsv.v, b = t; break;
+        case 3: r = p, g = q, b = hsv.v; break;
+        case 4: r = t, g = p, b = hsv.v; break;
+        case 5: r = hsv.v, g = p, b = q; break;
+    }
+
+    rgb->r = r * 255;
+    rgb->g = g * 255;
+    rgb->b = b * 255;
+}
+
+/**
+ * Converts an RGB color value to HSV. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSV_color_space.
+ * Assumes r, g, and b are contained in the set [0, 255] and
+ * returns h, s, and v in the set [0, 1].
+ *
+ * @param   Number  r       The red color value
+ * @param   Number  g       The green color value
+ * @param   Number  b       The blue color value
+ * @return  Array           The HSV representation
+ */
+static void
+rgbToHsv(spotlight_rgb_color_t rgb, spotlight_hsv_color_t *hsv)
+{
+    double rd = (double) rgb.r / 255;
+    double gd = (double) rgb.g / 255;
+    double bd = (double) rgb.b / 255;
+    double max = threeway_max(rd, gd, bd), min = threeway_min(rd, gd, bd);
+    double h, s, v = max;
+
+    double d = max - min;
+    s = max == 0 ? 0 : d / max;
+
+    if (max == min) {
+        h = 0; // achromatic
+    }
+	else {
+        if (max == rd) {
+            h = (gd - bd) / d + (gd < bd ? 6 : 0);
+        }
+		else if (max == gd) {
+            h = (bd - rd) / d + 2;
+        }
+		else if (max == bd) {
+            h = (rd - gd) / d + 4;
+        }
+        h /= 6;
+    }
+
+    hsv->h = h;
+    hsv->s = s;
+    hsv->v = v;
+}
+
 static void
 spotlight_connack_cb(void)
 {
@@ -121,7 +225,8 @@ spotlight_connack_cb(void)
 
 static void
 spotlight_publish_cb(char const *topic, uint16_t topic_length,
-					 const void *payload, uint16_t payload_length)
+					 const void *payload, uint16_t payload_length,
+					 uint8_t retained)
 {
 	// This callback will be executed when topic is received
 	char *strvalue = malloc(topic_length + 1);
@@ -134,7 +239,7 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
 	uint8_t dest;
 	char type[6];
 
-	SPOTDEBUG("MQTT Received:%s", strvalue);
+	SPOTDEBUG("MQTT Received (%d):%s", retained, strvalue);
 
 	if (!strcmp(strvalue, mqtt_strobo_topic)) {
 		SPOTDEBUG("MQTT set STROBO");
@@ -156,46 +261,75 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
 
 	ret = sscanf(strvalue, mqtt_subscribe_set_format, &dest, type);
 
-	if (ret == 2 && dest > 0 && dest <= SPOTLIGHT_CHANNELS) {
+	if (ret == 2 && dest <= SPOTLIGHT_CHANNELS) {
 		SPOTDEBUG("MQTT set CHANNEL:%d,%s", dest, type);
-		if (payload_length > 0) {
-			free(strvalue);
-			strvalue = malloc(payload_length + 1);
-			if (strvalue == NULL)
-          		goto out;
-			memcpy(strvalue, payload, payload_length);
-			strvalue[payload_length] = '\0';
+		free(strvalue);
+		strvalue = malloc(payload_length + 1);
+		if (strvalue == NULL)
+			goto out;
+		memcpy(strvalue, payload, payload_length);
+		strvalue[payload_length] = '\0';
 
-			if (!strcmp_P(type, PSTR("color"))) {
-				uint8_t r, g, b;
-				ret = sscanf_P(strvalue, PSTR("%2hhx%2hhx%2hhx"), &r, &g, &b);
-				if (ret == 3) {
-					SPOTDEBUG("MQTT set color:%d,%d,%d", r, g, b);
+		if (!strcmp_P(type, PSTR("color"))) {
+			uint8_t r, g, b;
+			ret = sscanf_P(strvalue, PSTR("%2hhx%2hhx%2hhx"), &r, &g, &b);
+			if (ret == 3) {
+				SPOTDEBUG("MQTT set color:%d,%d,%d", r, g, b);
+				if (dest > 0) {
 					channels[dest - 1].target.r = r;
 					channels[dest - 1].target.g = g;
 					channels[dest - 1].target.b = b;
 				}
-				else {
-					SPOTDEBUG("MQTT set type unkown");
-					goto out;
+				else if (dest == 0 && !retained) {
+					for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
+						channels[i].target.r = r;
+						channels[i].target.g = g;
+						channels[i].target.b = b;
+					}
 				}
 			}
-			else if (!strcmp_P(type, PSTR("mode"))) {
-				uint8_t mode;
-				ret = sscanf_P(strvalue, PSTR("%1hhi"), &mode);
-				if (ret == 1) {
-					SPOTDEBUG("MQTT set mode:%d", mode);
-					if (mode == 1) {
-						channels[dest - 1].mode = SPOTLIGHT_MODE_FADE;
-					}
-					else {
-						channels[dest - 1].mode = SPOTLIGHT_MODE_NORMAL;
-					}
-
+			else {
+				SPOTDEBUG("MQTT set type unkown");
+				goto out;
+			}
+		}
+		else if (!strcmp_P(type, PSTR("mode"))) {
+			uint8_t mode;
+			ret = sscanf_P(strvalue, PSTR("%1hhi"), &mode);
+			if (ret == 1) {
+				SPOTDEBUG("MQTT set mode:%d", mode);
+				if (dest > 0) {
+					channels[dest - 1].mode = mode == 1 ? SPOTLIGHT_MODE_FADE : SPOTLIGHT_MODE_NORMAL;
 				}
-				else {
-					SPOTDEBUG("MQTT set type unkown");
-					goto out;
+				else if (dest == 0 && !retained) {
+					for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
+						channels[i].mode = mode == 1 ? SPOTLIGHT_MODE_FADE : SPOTLIGHT_MODE_NORMAL;
+					}
+				}
+			}
+			else {
+				SPOTDEBUG("MQTT set type unkown");
+				goto out;
+			}
+		}
+		else if (!strcmp_P(type, PSTR("rand")) && !retained) {
+			SPOTDEBUG("MQTT set random");
+			if (dest > 0) {
+				spotlight_hsv_color_t hsv;
+				rgbToHsv(channels[dest - 1].value, &hsv);
+				if (hsv.s == 0) hsv.s = 1;
+				if (hsv.v == 0) hsv.v = 1;
+				hsv.h = (double)rand() / (double)RAND_MAX;
+				hsvToRgb(hsv, &channels[dest - 1].target);
+			}
+			else {
+				spotlight_hsv_color_t hsv;
+				for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
+					rgbToHsv(channels[i].value, &hsv);
+					if (hsv.s == 0) hsv.s = 1;
+					if (hsv.v == 0) hsv.v = 1;
+					hsv.h = (double)rand() / (double)RAND_MAX;
+					hsvToRgb(hsv, &channels[i].target);
 				}
 			}
 		}
