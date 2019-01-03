@@ -45,26 +45,30 @@
 #define SPOTLIGHT_VALUESIZE 16
 #define SPOTLIGHT_TOPICSIZE 32
 
-enum spotlight_update {
-	SPOTLIGHT_UPDATE,
-	SPOTLIGHT_NOUPDATE
+enum spotlight_update
+{
+  SPOTLIGHT_UPDATE,
+  SPOTLIGHT_NOUPDATE
 };
 
-enum spotlight_mode {
-	SPOTLIGHT_MODE_NORMAL,
-	SPOTLIGHT_MODE_FADE
+enum spotlight_mode
+{
+  SPOTLIGHT_MODE_NORMAL,
+  SPOTLIGHT_MODE_FADE
 };
 
-typedef struct {
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
+typedef struct
+{
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
 } spotlight_rgb_color_t;
 
-typedef struct {
-	double h;
-	double s;
-	double v;
+typedef struct
+{
+  double h;
+  double s;
+  double v;
 } spotlight_hsv_color_t;
 
 typedef struct
@@ -78,12 +82,13 @@ typedef struct
   enum spotlight_update sendUpdate;
 } spotlight_channel_t;
 
-typedef struct {
-	uint8_t mqtt_ip[IPADDR_LEN];
-	char mqtt_user[SPOTLIGHT_VALUESIZE];
-	char mqtt_pass[SPOTLIGHT_VALUESIZE];
-	char mqtt_topic[SPOTLIGHT_TOPICSIZE];
-	uint8_t dmx_offset;
+typedef struct
+{
+  uint8_t mqtt_ip[IPADDR_LEN];
+  char mqtt_user[SPOTLIGHT_VALUESIZE];
+  char mqtt_pass[SPOTLIGHT_VALUESIZE];
+  char mqtt_topic[SPOTLIGHT_TOPICSIZE];
+  uint8_t dmx_offset;
 } spotlight_params_t;
 
 extern spotlight_params_t spotlight_params_ram;

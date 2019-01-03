@@ -27,95 +27,120 @@
 #include "protocols/ecmd/ecmd-base.h"
 #include "services/spotlight/spotlight.h"
 
-int16_t parse_cmd_mqtt_ip(char *cmd, char *output, uint16_t len)
+int16_t
+parse_cmd_mqtt_ip(char *cmd, char *output, uint16_t len)
 {
-	uip_ipaddr_t hostaddr;
+  uip_ipaddr_t hostaddr;
 
-    while (*cmd == ' ')
-		cmd++;
+  while (*cmd == ' ')
+    cmd++;
 
-	if (*cmd != '\0') {
-        /* try to parse ip */
-        if (parse_ip(cmd, &hostaddr))
-	    	return ECMD_ERR_PARSE_ERROR;
+  if (*cmd != '\0')
+  {
+    /* try to parse ip */
+    if (parse_ip(cmd, &hostaddr))
+      return ECMD_ERR_PARSE_ERROR;
 
-        eeprom_save(spotlight_params.mqtt_ip, &hostaddr, IPADDR_LEN);
-        eeprom_update_chksum();
+    eeprom_save(spotlight_params.mqtt_ip, &hostaddr, IPADDR_LEN);
+    eeprom_update_chksum();
 
-        return ECMD_FINAL_OK;
-    }
-    else {
-        eeprom_restore_ip(spotlight_params.mqtt_ip, &hostaddr);
+    return ECMD_FINAL_OK;
+  }
+  else
+  {
+    eeprom_restore_ip(spotlight_params.mqtt_ip, &hostaddr);
 
-        return ECMD_FINAL(print_ipaddr(&hostaddr, output, len));
-    }
+    return ECMD_FINAL(print_ipaddr(&hostaddr, output, len));
+  }
 }
 
 int16_t
 parse_cmd_mqtt_user(char *cmd, char *output, uint16_t len)
 {
-	while (*cmd == ' ')
-		cmd++;
+  while (*cmd == ' ')
+    cmd++;
 
-	if (*cmd != '\0') {
-		strncpy(spotlight_params_ram.mqtt_user, cmd, sizeof(spotlight_params_ram.mqtt_user));
-		spotlight_params_ram.mqtt_user[sizeof(spotlight_params_ram.mqtt_user) - 1] = '\0';
-		eeprom_save(spotlight_params.mqtt_user, spotlight_params_ram.mqtt_user, SPOTLIGHT_VALUESIZE);
-		eeprom_update_chksum();
-		return ECMD_FINAL_OK;
-	}
+  if (*cmd != '\0')
+  {
+    strncpy(spotlight_params_ram.mqtt_user, cmd,
+            sizeof(spotlight_params_ram.mqtt_user));
+    spotlight_params_ram.mqtt_user[sizeof(spotlight_params_ram.mqtt_user) -
+                                   1] = '\0';
+    eeprom_save(spotlight_params.mqtt_user, spotlight_params_ram.mqtt_user,
+                SPOTLIGHT_VALUESIZE);
+    eeprom_update_chksum();
+    return ECMD_FINAL_OK;
+  }
 
-  	return ECMD_FINAL(snprintf_P(output, len, PSTR("%s"), spotlight_params_ram.mqtt_user));
+  return
+    ECMD_FINAL(snprintf_P
+               (output, len, PSTR("%s"), spotlight_params_ram.mqtt_user));
 }
 
 int16_t
 parse_cmd_mqtt_pass(char *cmd, char *output, uint16_t len)
 {
-	while (*cmd == ' ')
-		cmd++;
+  while (*cmd == ' ')
+    cmd++;
 
-	if (*cmd != '\0') {
-		strncpy(spotlight_params_ram.mqtt_pass, cmd, sizeof(spotlight_params_ram.mqtt_pass));
-		spotlight_params_ram.mqtt_pass[sizeof(spotlight_params_ram.mqtt_pass) - 1] = '\0';
-		eeprom_save(spotlight_params.mqtt_pass, spotlight_params_ram.mqtt_pass, SPOTLIGHT_VALUESIZE);
-		eeprom_update_chksum();
-		return ECMD_FINAL_OK;
-	}
+  if (*cmd != '\0')
+  {
+    strncpy(spotlight_params_ram.mqtt_pass, cmd,
+            sizeof(spotlight_params_ram.mqtt_pass));
+    spotlight_params_ram.mqtt_pass[sizeof(spotlight_params_ram.mqtt_pass) -
+                                   1] = '\0';
+    eeprom_save(spotlight_params.mqtt_pass, spotlight_params_ram.mqtt_pass,
+                SPOTLIGHT_VALUESIZE);
+    eeprom_update_chksum();
+    return ECMD_FINAL_OK;
+  }
 
-	return ECMD_FINAL(snprintf_P(output, len, PSTR("%s"), spotlight_params_ram.mqtt_pass));
+  return
+    ECMD_FINAL(snprintf_P
+               (output, len, PSTR("%s"), spotlight_params_ram.mqtt_pass));
 }
 
 int16_t
 parse_cmd_mqtt_topic(char *cmd, char *output, uint16_t len)
 {
-	while (*cmd == ' ')
-		cmd++;
+  while (*cmd == ' ')
+    cmd++;
 
-	if (*cmd != '\0') {
-		strncpy(spotlight_params_ram.mqtt_topic, cmd, sizeof(spotlight_params_ram.mqtt_topic));
-		spotlight_params_ram.mqtt_topic[sizeof(spotlight_params_ram.mqtt_topic) - 1] = '\0';
-		eeprom_save(spotlight_params.mqtt_topic, spotlight_params_ram.mqtt_topic, SPOTLIGHT_TOPICSIZE);
-		eeprom_update_chksum();
-		return ECMD_FINAL_OK;
-	}
+  if (*cmd != '\0')
+  {
+    strncpy(spotlight_params_ram.mqtt_topic, cmd,
+            sizeof(spotlight_params_ram.mqtt_topic));
+    spotlight_params_ram.mqtt_topic[sizeof(spotlight_params_ram.mqtt_topic) -
+                                    1] = '\0';
+    eeprom_save(spotlight_params.mqtt_topic, spotlight_params_ram.mqtt_topic,
+                SPOTLIGHT_TOPICSIZE);
+    eeprom_update_chksum();
+    return ECMD_FINAL_OK;
+  }
 
-	return ECMD_FINAL(snprintf_P(output, len, PSTR("%s"), spotlight_params_ram.mqtt_topic));
+  return
+    ECMD_FINAL(snprintf_P
+               (output, len, PSTR("%s"), spotlight_params_ram.mqtt_topic));
 }
 
 uint16_t
 parse_cmd_dmx_offset(char *cmd, char *output, uint16_t len)
 {
-	while (*cmd == ' ')
-		cmd++;
+  while (*cmd == ' ')
+    cmd++;
 
-	if (*cmd != '\0') {
-		spotlight_params_ram.dmx_offset = atoi(cmd);
-		eeprom_save_char(spotlight_params.dmx_offset, spotlight_params_ram.dmx_offset);
-		eeprom_update_chksum();
-		return ECMD_FINAL_OK;
-	}
+  if (*cmd != '\0')
+  {
+    spotlight_params_ram.dmx_offset = atoi(cmd);
+    eeprom_save_char(spotlight_params.dmx_offset,
+                     spotlight_params_ram.dmx_offset);
+    eeprom_update_chksum();
+    return ECMD_FINAL_OK;
+  }
 
-	return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), spotlight_params_ram.dmx_offset));
+  return
+    ECMD_FINAL(snprintf_P
+               (output, len, PSTR("%d"), spotlight_params_ram.dmx_offset));
 }
 
 /*
