@@ -355,9 +355,8 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
       {
         spotlight_hsv_color_t hsv;
         rgbToHsv(channels[dest - 1].value, &hsv);
-        if (hsv.s == 0)
-          hsv.s = 1;
-        if (hsv.v == 0)
+        hsv.s = 1;
+        if (hsv.v < 0.1 || hsv.v > 0.9)
           hsv.v = 1;
         hsv.h = (double) rand() / (double) RAND_MAX;
         hsvToRgb(hsv, &channels[dest - 1].target);
@@ -368,9 +367,8 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
         for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
         {
           rgbToHsv(channels[i].value, &hsv);
-          if (hsv.s == 0)
-            hsv.s = 1;
-          if (hsv.v == 0)
+          hsv.s = 1;
+          if (hsv.v < 0.1 || hsv.v > 0.9)
             hsv.v = 1;
           hsv.h = (double) rand() / (double) RAND_MAX;
           hsvToRgb(hsv, &channels[i].target);
