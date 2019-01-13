@@ -194,7 +194,7 @@ static void mqtt_fire_publish_callback(char const *topic,
                                        uint16_t topic_length,
                                        const void *payload,
                                        uint16_t payload_length,
-                                       uint8_t retained);
+                                       bool retained);
 
 static void mqtt_poll(void);
 static void mqtt_main(void);
@@ -1208,7 +1208,7 @@ mqtt_fire_close_callback(void)
 static void
 mqtt_fire_publish_callback(char const *topic, uint16_t topic_length,
                            const void *payload, uint16_t payload_length,
-                           uint8_t retained)
+                           bool retained)
 {
   for (int i = 0; i < MQTT_CALLBACK_SLOTS; ++i)
   {
