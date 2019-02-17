@@ -56,6 +56,7 @@ char *mqtt_subscribe_set_topic;
 char *mqtt_subscribe_set_format;
 char *mqtt_will_topic;
 char *mqtt_strobo_topic;
+char mqtt_client_id[6 + 4 + 1]; // 6 chars for mac, 4 for hostname, 1 for null byte
 
 bool send_online_lwt = false;
 uint8_t strobo = 0;
@@ -100,7 +101,7 @@ static spotlight_channel_t channels[SPOTLIGHT_CHANNELS] =
      SPOTLIGHT_NOUPDATE} };
 
 static mqtt_connection_config_t mqtt_connection_config = {
-  .client_id = CONF_HOSTNAME,   // @todo: add mac address
+  .client_id = NULL,
   .user = "",
   .pass = "",
   .will_topic = NULL,
@@ -479,6 +480,15 @@ spotlight_netinit(void)
           strlen(spotlight_params_ram.mqtt_topic) + 1);
   strcat_P(mqtt_will_topic, PSTR(MQTT_WILL_TOPIC_SUFFIX));
 
+  uint8_t *addr = uip_ethaddr.addr;
+  mqtt_client_id[0] = '\0';
+  sprintf_P(mqtt_client_id, PSTR("%.4s-%02X%02X%02X%02X%02X%02X"),
+    CONF_HOSTNAME,
+    addr[0], addr[1], addr[2],
+    addr[3], addr[4], addr[5]);
+  SPOTDEBUG("MqTT Client-Id: %s", mqtt_client_id);
+
+  mqtt_connection_config.client_id = mqtt_client_id;
   mqtt_connection_config.will_topic = mqtt_will_topic;
   mqtt_connection_config.will_message = MQTT_WILL_MESSAGE_OFFLINE;
   mqtt_connection_config.will_message_length =
