@@ -25,6 +25,7 @@
 #include "config.h"
 #include "spotlight.h"
 #include "core/eeprom.h"
+#include "core/scheduler/scheduler.h"
 #include "hardware/i2c/master/i2c_pca9685.h"
 #include "protocols/mqtt/mqtt.h"
 #include "protocols/uip/uip.h"
@@ -45,14 +46,24 @@ spotlight_params_t spotlight_params_ram;
 #define MAX_TOPIC_LENGTH 255
 
 #define MQTT_RETAIN true
-#define MQTT_SUBSCRIBE_SET_SUFFIX "/set/#"
+#define MQTT_SUBSCRIBE_SET_COLOR_SUFFIX "/set/+/color"
+#define MQTT_SUBSCRIBE_SET_MODE_SUFFIX "/set/+/mode"
+#define MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX "/set/+/rand"
+
 #define MQTT_SUBSCRIBE_SET_FORMAT "/set/%2hhi/%5s"
 #define MQTT_STROBO_SUFFIX "/set/strobo"
 #define MQTT_WILL_TOPIC_SUFFIX "/status/lwt"
 #define MQTT_WILL_MESSAGE_OFFLINE "offline"
 #define MQTT_WILL_MESSAGE_ONLINE "online"
 
-char *mqtt_subscribe_set_topic;
+char *mqtt_subscribe_set_color_topic;
+char *mqtt_subscribe_set_mode_topic;
+char *mqtt_subscribe_set_random_topic;
+
+int8_t timer_color = 0;
+int8_t timer_mode = 0;
+int8_t timer_random = 0;
+
 char *mqtt_subscribe_set_format;
 char *mqtt_will_topic;
 char *mqtt_strobo_topic;
@@ -233,12 +244,48 @@ rgbToHsv(spotlight_rgb_color_t rgb, spotlight_hsv_color_t * hsv)
   hsv->v = v;
 }
 
+void
+spotlight_subscribe_color()
+{
+  if (mqtt_is_connected()) {
+    SPOTDEBUG("MqTT Subscribe: %s", mqtt_subscribe_set_color_topic);
+    mqtt_construct_subscribe_packet(mqtt_subscribe_set_color_topic);
+  }
+}
+
+void
+spotlight_subscribe_mode()
+{
+  if (mqtt_is_connected()) {
+    SPOTDEBUG("MqTT Subscribe: %s", mqtt_subscribe_set_mode_topic);
+    mqtt_construct_subscribe_packet(mqtt_subscribe_set_mode_topic);
+
+    SPOTDEBUG("MqTT Subscribe: %s", mqtt_strobo_topic);
+    mqtt_construct_subscribe_packet(mqtt_strobo_topic);
+  }
+}
+
+void
+spotlight_subscribe_random()
+{
+  if (mqtt_is_connected()) {
+    SPOTDEBUG("MqTT Subscribe: %s", mqtt_subscribe_set_random_topic);
+    mqtt_construct_subscribe_packet(mqtt_subscribe_set_random_topic);
+  }
+}
+
 static void
 spotlight_connack_cb(void)
 {
   // This callback will be executed when broker connection is established
-  SPOTDEBUG("MqTT Subscribe: %s", mqtt_subscribe_set_topic);
-  mqtt_construct_subscribe_packet(mqtt_subscribe_set_topic);
+  scheduler_delete_timer(timer_color);
+  scheduler_delete_timer(timer_mode);
+  scheduler_delete_timer(timer_random);
+
+  timer_color = scheduler_add_oneshot_timer(spotlight_subscribe_color, 5 * CONF_MTICKS_PER_SEC);
+  timer_mode = scheduler_add_oneshot_timer(spotlight_subscribe_mode, 10 * CONF_MTICKS_PER_SEC);
+  timer_random = scheduler_add_oneshot_timer(spotlight_subscribe_random, 15 * CONF_MTICKS_PER_SEC);
+
   send_online_lwt = true;
 }
 
@@ -318,7 +365,7 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
       }
       else
       {
-        SPOTDEBUG("MQTT set type unkown");
+        SPOTDEBUG("MQTT invalid color");
         goto out;
       }
     }
@@ -345,7 +392,7 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
       }
       else
       {
-        SPOTDEBUG("MQTT set type unkown");
+        SPOTDEBUG("MQTT invalid mode");
         goto out;
       }
     }
@@ -448,13 +495,32 @@ spotlight_netinit(void)
   mqtt_connection_config.pass = spotlight_params_ram.mqtt_pass;
 
   // init base topic
-  mqtt_subscribe_set_topic =
+  // Assemble Color Set Topic
+  mqtt_subscribe_set_color_topic =
     malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_SUFFIX)) + 1);
-  mqtt_subscribe_set_topic[0] = '\0';
-  strncpy(mqtt_subscribe_set_topic, spotlight_params_ram.mqtt_topic,
+           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_COLOR_SUFFIX)) + 1);
+  mqtt_subscribe_set_color_topic[0] = '\0';
+  strncpy(mqtt_subscribe_set_color_topic, spotlight_params_ram.mqtt_topic,
           strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_subscribe_set_topic, PSTR(MQTT_SUBSCRIBE_SET_SUFFIX));
+  strcat_P(mqtt_subscribe_set_color_topic, PSTR(MQTT_SUBSCRIBE_SET_COLOR_SUFFIX));
+
+  // Assemble Mode Set Topic
+  mqtt_subscribe_set_mode_topic =
+    malloc(strlen(spotlight_params_ram.mqtt_topic) +
+           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_MODE_SUFFIX)) + 1);
+  mqtt_subscribe_set_mode_topic[0] = '\0';
+  strncpy(mqtt_subscribe_set_mode_topic, spotlight_params_ram.mqtt_topic,
+          strlen(spotlight_params_ram.mqtt_topic) + 1);
+  strcat_P(mqtt_subscribe_set_mode_topic, PSTR(MQTT_SUBSCRIBE_SET_MODE_SUFFIX));
+
+  // Assemble Random Set Topic
+  mqtt_subscribe_set_random_topic =
+    malloc(strlen(spotlight_params_ram.mqtt_topic) +
+           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX)) + 1);
+  mqtt_subscribe_set_random_topic[0] = '\0';
+  strncpy(mqtt_subscribe_set_random_topic, spotlight_params_ram.mqtt_topic,
+          strlen(spotlight_params_ram.mqtt_topic) + 1);
+  strcat_P(mqtt_subscribe_set_random_topic, PSTR(MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX));
 
   mqtt_subscribe_set_format =
     malloc(strlen(spotlight_params_ram.mqtt_topic) +
