@@ -6,5 +6,6 @@ dep_bool_menu "Spotlight: Multichannel pwm" SPOTLIGHT_SUPPORT $MQTT_SUPPORT $I2C
 	if [ "$SPOTLIGHT_PCA9685_STROBO" = "y" ]; then
 		define_bool PCA9685_OUTPUT_ENABLE y
 	fi
-	bool "Debug" SPOTLIGHT_DEBUG
+	comment "Debugging Flags"
+	dep_bool "Debug" SPOTLIGHT_DEBUG $DEBUG
 endmenu
