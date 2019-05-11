@@ -96,6 +96,7 @@ extern spotlight_params_t spotlight_params_ram;
 void spotlight_netinit(void);
 void spotlight_main(void);
 void spotlight_process(void);
+uint8_t spotlight_dmx_offset(void);
 #endif
 
 #endif /* SPOTLIGHT_H */

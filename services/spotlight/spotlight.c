@@ -25,7 +25,7 @@
 #include "config.h"
 #include "spotlight.h"
 #include "core/eeprom.h"
-#include "core/scheduler/scheduler.h"
+#include "core/scheduler/dynamic.h"
 #include "hardware/i2c/master/i2c_pca9685.h"
 #include "protocols/mqtt/mqtt.h"
 #include "protocols/uip/uip.h"
@@ -67,7 +67,7 @@ int8_t timer_random = 0;
 char *mqtt_subscribe_set_format;
 char *mqtt_will_topic;
 char *mqtt_strobo_topic;
-char mqtt_client_id[6 + 4 + 1]; // 6 chars for mac, 4 for hostname, 1 for null byte
+char mqtt_client_id[12 + 4 + 1 + 1]; // 12 chars for mac, 4 for hostname, 1 for dash, 1 for null byte
 
 bool send_online_lwt = false;
 uint8_t strobo = 0;
@@ -291,8 +291,8 @@ spotlight_connack_cb(void)
 
 static void
 spotlight_publish_cb(char const *topic, uint16_t topic_length,
-                     const void *payload, uint16_t payload_length,
-                     uint8_t retained)
+                     void const *payload, uint16_t payload_length,
+                     bool retained)
 {
   // This callback will be executed when topic is received
   char *strvalue = malloc(topic_length + 1);
@@ -548,6 +548,7 @@ spotlight_netinit(void)
 
   uint8_t *addr = uip_ethaddr.addr;
   mqtt_client_id[0] = '\0';
+
   sprintf_P(mqtt_client_id, PSTR("%.4s-%02X%02X%02X%02X%02X%02X"),
     CONF_HOSTNAME,
     addr[0], addr[1], addr[2],
@@ -642,6 +643,12 @@ spotlight_dmx_update(void)
                            SPOTLIGHT_CHANNELS * 3 + SPOTLIGHT_CHANNELS,
                            dmx_conn_id) / (255 / 25);
   }
+}
+
+uint8_t
+spotlight_dmx_offset(void)
+{
+  return spotlight_params_ram.dmx_offset;
 }
 
 void

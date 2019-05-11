@@ -110,14 +110,17 @@ dnl END
 dnl // die ecmd syntax ist "c6 get Wassersoll" oder "c6 set Wassersoll 255"
 dnl // die werte koennen von 0 bis 255 gehen.
 
+C6_HEADER(`#include "services/spotlight/spotlight.h"')
+C6_HEADER(`#include "protocols/mqtt/mqtt.h"')
+
 THREAD(uptime)
 	uint32_t working_minutes = clock_get_uptime() / 60;
-    int d = (int)(working_minutes / 1440);
-    int m = (int)(working_minutes % 1440);
+	int d = (int)(working_minutes / 1440);
+	int m = (int)(working_minutes % 1440);
 
 	TTY_SELECT(uptime)
 	TTY_HOME()
-    TTY_WRITE(`"Up: %u days, %02u:%02u"', d, m / 60, m % 60);
+	TTY_WRITE(`"Up: %u days, %02u:%02u"', d, m / 60, m % 60);
 
 	WAIT(2)
 THREAD_END(uptime)
@@ -149,18 +152,29 @@ THREAD(mqtt)
 	WAIT(2)
 THREAD_END(mqtt)
 
+THREAD(dmx)
+	TTY_SELECT(dmx)
+	TTY_HOME()
+
+	TTY_WRITE(`"DMX U: %u DMX A: %u"', CONF_ARTNET_OUTUNIVERSE, spotlight_dmx_offset());
+
+	WAIT(2)
+THREAD_END(dmx)
+
 ON STARTUP DO
 	dnl Initialize display and write out greeting
-    TTY_CLEAR()
-    TTY_HOME()
+	TTY_CLEAR()
+	TTY_HOME()
 
 	TTY_CREATE_WINDOW(uptime, 1, 20, 0, 0)
 	TTY_CREATE_WINDOW(ipaddr, 1, 20, 1, 0)
 	TTY_CREATE_WINDOW(mqtt,   1, 20, 2, 0)
+	TTY_CREATE_WINDOW(dmx,    1, 20, 3, 0)
 
 	THREAD_START(uptime)
 	THREAD_START(ipaddr)
 	THREAD_START(mqtt)
+	THREAD_START(dmx)
 END
 
 CONTROL_END
