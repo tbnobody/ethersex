@@ -1,11 +1,9 @@
 /*
- *
- * Copyright (c) 2008 by Christian Dietrich <stettberger@dokucode.de>
- * Copyright (c) 2008 by Stefan Siegl <stesie@brokenpipe.de>
+ * Copyright (c) 2019 by Erik Kunze <ethersex@erik-kunze.de>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
+ * as published by the Free Software Foundation; either version 3
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -21,17 +19,10 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-#ifndef _USB_REQUESTS_H
-#define _USB_REQUESTS_H
+#ifndef __PARAM_H
+#define __PARAM_H
 
-enum
-{
-  /* For USB Ecmd */
-  USB_REQUEST_ECMD = 0,
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
-  /* USB networking */
-  USB_REQUEST_NET_SEND = 10,
-  USB_REQUEST_NET_RECV = 11,
-};
-
-#endif /* _USB_REQUESTS_H */
+#endif /* __PARAM_H */

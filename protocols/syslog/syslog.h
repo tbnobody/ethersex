@@ -3,6 +3,7 @@
  * Copyright (c) 2007 by Christian Dietrich <stettberger@dokucode.de>
  * Copyright (c) 2008 by Stefan Siegl <stesie@brokenpipe.de>
  * Copyright (c) 2015 by Daniel Lindner <daniel.lindner@gmx.de>
+ * Copyright (c) 2019 by Erik Kunze <ethersex@erik-kunze.de>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,13 +26,10 @@
 #ifndef _SYSLOG_H
 #define _SYSLOG_H
 
-#include <avr/pgmspace.h>
-#include "protocols/uip/uip.h"
-
-#define MAX_DYNAMIC_SYSLOG_BUFFER 100
+#include <stdint.h>
 
 uint8_t syslog_send(const char *message);
-uint8_t syslog_sendf_P(PGM_P message, ...);
+uint8_t syslog_sendf_P(const char *message, ...);
 
 void syslog_flush(void);
 

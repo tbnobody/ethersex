@@ -1,6 +1,7 @@
 /*
  *
  * Copyright (c) 2015 by Daniel Lindner <daniel.lindner@gmx.de>
+ * Copyright (c) 2019 by Erik Kunze <ethersex@erik-kunze.de>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,60 +26,56 @@
 #include "queue.h"
 
 uint8_t
-push(char *data, Queue * queue)
+queue_push(void *data, Queue * queue)
 {
-  Node *help = malloc(sizeof(Node));
-
-  if (help == NULL)
+  if (queue->limit != 0 && queue->limit <= queue->count)
+    return 0;
+  if (queue->count == UINT16_MAX)       // overall protection
     return 0;
 
-  help->prev = NULL;
-  help->data = data;
+  Node *node = malloc(sizeof(Node));
+  if (node == NULL)
+    return 0;
 
-  if (queue->end == NULL)       // queue is empty
-    queue->end = help;
+  node->data = data;
+  node->next = NULL;
+
+  if (queue_is_empty(queue))
+    queue->start = queue->end = node;
   else
-    queue->start->prev = help;
-
-  help->next = queue->start;
-  queue->start = help;
+  {
+    queue->start->next = node;
+    queue->start = node;
+  }
+  queue->count++;
 
   return 1;
 }
 
-char *
-pop(Queue * queue)
+void *
+queue_pop(Queue * queue)
 {
-  Node *help;
-  char *data;
-  help = queue->end;
+  if (queue_is_empty(queue))
+    return NULL;
 
-  if (help != NULL)
-  {
-    queue->end = queue->end->prev;
+  Node *node = queue->end;
+  queue->end = node->next;
+  queue->count--;
 
-    if (queue->end == NULL)     // queue is empty
-      queue->start = NULL;
-    else
-      queue->end->next = NULL;
+  void *data = node->data;
+  free(node);
 
-    help->prev = NULL;
-    data = help->data;
-    free(help);
-
-    return data;
-  }
-
-  return NULL;
+  return data;
 }
 
-
+void *
+queue_peek(Queue * queue)
+{
+  return queue_is_empty(queue) ? NULL : queue->end->data;
+}
 
 uint8_t
-isEmpty(const Queue * queue)
+queue_is_empty(const Queue * queue)
 {
-  if (queue->end == NULL && queue->start == NULL)
-    return 1;
-
-  return 0;
+  return (queue->end == NULL);
 }
