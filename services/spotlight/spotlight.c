@@ -50,9 +50,9 @@ spotlight_params_t spotlight_params_ram;
 #define MQTT_SUBSCRIBE_SET_MODE_SUFFIX "/set/+/mode"
 #define MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX "/set/+/rand"
 #define MQTT_SUBSCRIBE_SET_SWITCH_SUFFIX "/set/+/switch"
+#define MQTT_SUBSCRIBE_SET_STROBO_SUFFIX "/set/strobo"
 
 #define MQTT_SUBSCRIBE_SET_FORMAT "/set/%2hhi/%6s"
-#define MQTT_STROBO_SUFFIX "/set/strobo"
 #define MQTT_WILL_TOPIC_SUFFIX "/status/lwt"
 #define MQTT_WILL_MESSAGE_OFFLINE "offline"
 #define MQTT_WILL_MESSAGE_ONLINE "online"
@@ -124,27 +124,27 @@ static mqtt_connection_config_t mqtt_connection_config = {
 };
 
 double
-twoway_max(double a, double b)
+max2(double a, double b)
 {
   return a > b ? a : b;
 }
 
 double
-twoway_min(double a, double b)
+min2(double a, double b)
 {
   return a < b ? a : b;
 }
 
 double
-threeway_max(double a, double b, double c)
+max3(double a, double b, double c)
 {
-  return twoway_max(a, twoway_max(b, c));
+  return max2(a, max2(b, c));
 }
 
 double
-threeway_min(double a, double b, double c)
+min3(double a, double b, double c)
 {
-  return twoway_min(a, twoway_min(b, c));
+  return min2(a, min2(b, c));
 }
 
 /**
@@ -213,7 +213,7 @@ rgbToHsv(spotlight_rgb_color_t rgb, spotlight_hsv_color_t * hsv)
   double rd = (double) rgb.r / 255;
   double gd = (double) rgb.g / 255;
   double bd = (double) rgb.b / 255;
-  double max = threeway_max(rd, gd, bd), min = threeway_min(rd, gd, bd);
+  double max = max3(rd, gd, bd), min = min3(rd, gd, bd);
   double h, s, v = max;
 
   double d = max - min;
@@ -248,40 +248,44 @@ rgbToHsv(spotlight_rgb_color_t rgb, spotlight_hsv_color_t * hsv)
 void
 spotlight_subscribe_color()
 {
-  if (mqtt_is_connected()) {
-    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_color_topic);
-    mqtt_construct_subscribe_packet(mqtt_subscribe_set_color_topic);
+  if (!mqtt_is_connected()) {
+    return;
   }
+  SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_color_topic);
+  mqtt_construct_subscribe_packet(mqtt_subscribe_set_color_topic);
 }
 
 void
 spotlight_subscribe_mode()
 {
-  if (mqtt_is_connected()) {
-    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_mode_topic);
-    mqtt_construct_subscribe_packet(mqtt_subscribe_set_mode_topic);
-
-    SPOTDEBUG("MQTT Subscribe: %s", mqtt_strobo_topic);
-    mqtt_construct_subscribe_packet(mqtt_strobo_topic);
+  if (!mqtt_is_connected()) {
+    return;
   }
+  SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_mode_topic);
+  mqtt_construct_subscribe_packet(mqtt_subscribe_set_mode_topic);
+
+  SPOTDEBUG("MQTT Subscribe: %s", mqtt_strobo_topic);
+  mqtt_construct_subscribe_packet(mqtt_strobo_topic);
 }
 
 void
 spotlight_subscribe_switch()
 {
-  if (mqtt_is_connected()) {
-    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_switch_topic);
-    mqtt_construct_subscribe_packet(mqtt_subscribe_set_switch_topic);
+  if (!mqtt_is_connected()) {
+    return;
   }
+  SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_switch_topic);
+  mqtt_construct_subscribe_packet(mqtt_subscribe_set_switch_topic);
 }
 
 void
 spotlight_subscribe_random()
 {
-  if (mqtt_is_connected()) {
-    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_random_topic);
-    mqtt_construct_subscribe_packet(mqtt_subscribe_set_random_topic);
+  if (!mqtt_is_connected()) {
+    return;
   }
+  SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_random_topic);
+  mqtt_construct_subscribe_packet(mqtt_subscribe_set_random_topic);
 }
 
 static void
@@ -599,11 +603,11 @@ spotlight_netinit(void)
 
   mqtt_strobo_topic =
     malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_STROBO_SUFFIX)) + 1);
+           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_STROBO_SUFFIX)) + 1);
   mqtt_strobo_topic[0] = '\0';
   strncpy(mqtt_strobo_topic, spotlight_params_ram.mqtt_topic,
           strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_strobo_topic, PSTR(MQTT_STROBO_SUFFIX));
+  strcat_P(mqtt_strobo_topic, PSTR(MQTT_SUBSCRIBE_SET_STROBO_SUFFIX));
 
   mqtt_will_topic =
     malloc(strlen(spotlight_params_ram.mqtt_topic) +
@@ -736,72 +740,53 @@ spotlight_process(void)
 
   for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
   {
+    channels[i].update = SPOTLIGHT_NOUPDATE;
+    if (channels[i].current_color.r != channels[i].target_color.r ||
+        channels[i].current_color.g != channels[i].target_color.g ||
+        channels[i].current_color.b != channels[i].target_color.b)
+    {
+      channels[i].update = SPOTLIGHT_UPDATE;
+      channels[i].sendUpdate = SPOTLIGHT_UPDATE;
+      update = SPOTLIGHT_UPDATE;
+    }
+
     switch (channels[i].mode)
     {
       case SPOTLIGHT_MODE_NORMAL:
-        if (channels[i].current_color.r != channels[i].target_color.r ||
-            channels[i].current_color.g != channels[i].target_color.g ||
-            channels[i].current_color.b != channels[i].target_color.b)
-        {
-
-          channels[i].current_color.r = channels[i].target_color.r;
-          channels[i].current_color.g = channels[i].target_color.g;
-          channels[i].current_color.b = channels[i].target_color.b;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
-        }
-        else
-        {
-          channels[i].update = SPOTLIGHT_NOUPDATE;
-        }
+        channels[i].current_color.r = channels[i].target_color.r;
+        channels[i].current_color.g = channels[i].target_color.g;
+        channels[i].current_color.b = channels[i].target_color.b;
         break;
 
       case SPOTLIGHT_MODE_FADE:
-        channels[i].update = SPOTLIGHT_NOUPDATE;
+        // Red
         if (channels[i].current_color.r > channels[i].target_color.r)
         {
           channels[i].current_color.r--;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
         }
         else if (channels[i].current_color.r < channels[i].target_color.r)
         {
           channels[i].current_color.r++;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
         }
 
+        // Green
         if (channels[i].current_color.g > channels[i].target_color.g)
         {
           channels[i].current_color.g--;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
         }
         else if (channels[i].current_color.g < channels[i].target_color.g)
         {
           channels[i].current_color.g++;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
         }
 
+        // Blue
         if (channels[i].current_color.b > channels[i].target_color.b)
         {
           channels[i].current_color.b--;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
         }
         else if (channels[i].current_color.b < channels[i].target_color.b)
         {
           channels[i].current_color.b++;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
         }
         break;
 
