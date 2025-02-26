@@ -249,7 +249,7 @@ void
 spotlight_subscribe_color()
 {
   if (mqtt_is_connected()) {
-    SPOTDEBUG("MqTT Subscribe: %s", mqtt_subscribe_set_color_topic);
+    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_color_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_color_topic);
   }
 }
@@ -258,10 +258,10 @@ void
 spotlight_subscribe_mode()
 {
   if (mqtt_is_connected()) {
-    SPOTDEBUG("MqTT Subscribe: %s", mqtt_subscribe_set_mode_topic);
+    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_mode_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_mode_topic);
 
-    SPOTDEBUG("MqTT Subscribe: %s", mqtt_strobo_topic);
+    SPOTDEBUG("MQTT Subscribe: %s", mqtt_strobo_topic);
     mqtt_construct_subscribe_packet(mqtt_strobo_topic);
   }
 }
@@ -270,7 +270,7 @@ void
 spotlight_subscribe_switch()
 {
   if (mqtt_is_connected()) {
-    SPOTDEBUG("MqTT Subscribe: %s", mqtt_subscribe_set_switch_topic);
+    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_switch_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_switch_topic);
   }
 }
@@ -279,7 +279,7 @@ void
 spotlight_subscribe_random()
 {
   if (mqtt_is_connected()) {
-    SPOTDEBUG("MqTT Subscribe: %s", mqtt_subscribe_set_random_topic);
+    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_random_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_random_topic);
   }
 }
@@ -539,7 +539,7 @@ spotlight_netinit(void)
     channels[i] = init_channel_config;
   }
 
-  SPOTDEBUG("MqTT Init");
+  SPOTDEBUG("MQTT Init");
   eeprom_restore(spotlight_params, &spotlight_params_ram,
                  sizeof(spotlight_params_t));
 
@@ -620,7 +620,7 @@ spotlight_netinit(void)
     CONF_HOSTNAME,
     addr[0], addr[1], addr[2],
     addr[3], addr[4], addr[5]);
-  SPOTDEBUG("MqTT Client-Id: %s", mqtt_client_id);
+  SPOTDEBUG("MQTT Client-Id: %s", mqtt_client_id);
 
   mqtt_connection_config.client_id = mqtt_client_id;
   mqtt_connection_config.will_topic = mqtt_will_topic;
