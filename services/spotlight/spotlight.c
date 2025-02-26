@@ -293,10 +293,10 @@ spotlight_connack_cb(void)
   scheduler_delete_timer(timer_switch);
   scheduler_delete_timer(timer_random);
 
-  timer_color = scheduler_add_oneshot_timer(spotlight_subscribe_color, 5 * CONF_MTICKS_PER_SEC);
-  timer_mode = scheduler_add_oneshot_timer(spotlight_subscribe_mode, 10 * CONF_MTICKS_PER_SEC);
-  timer_switch = scheduler_add_oneshot_timer(spotlight_subscribe_switch, 15 * CONF_MTICKS_PER_SEC);
-  timer_random = scheduler_add_oneshot_timer(spotlight_subscribe_random, 20 * CONF_MTICKS_PER_SEC);
+  timer_color = scheduler_add_oneshot_timer(spotlight_subscribe_color, 1 * CONF_MTICKS_PER_SEC);
+  timer_mode = scheduler_add_oneshot_timer(spotlight_subscribe_mode, 2 * CONF_MTICKS_PER_SEC);
+  timer_switch = scheduler_add_oneshot_timer(spotlight_subscribe_switch, 3 * CONF_MTICKS_PER_SEC);
+  timer_random = scheduler_add_oneshot_timer(spotlight_subscribe_random, 4 * CONF_MTICKS_PER_SEC);
 
   send_online_lwt = true;
 }
@@ -498,7 +498,7 @@ spotlight_poll_cb(void)
       uint8_t payload_size = 0;
 
       /* Publish color */
-      sprintf_P(topic, PSTR("%s/get/%d/color"),
+      snprintf_P(topic, sizeof(topic), PSTR("%s/get/%d/color"),
                 spotlight_params_ram.mqtt_topic, i + 1);
       payload_size = snprintf_P(payload, sizeof(payload), PSTR("%02hhX%02hhX%02hhX"), channels[i].current_color.r,
                 channels[i].current_color.g, channels[i].current_color.b);
@@ -507,7 +507,7 @@ spotlight_poll_cb(void)
                                     MQTT_RETAIN);
 
       /* Publish status */ 
-      sprintf_P(topic, PSTR("%s/get/%d/status"),
+      snprintf_P(topic, sizeof(topic), PSTR("%s/get/%d/status"),
         spotlight_params_ram.mqtt_topic, i + 1);
       payload_size = snprintf_P(payload, sizeof(payload), PSTR("%u"), channels[i].status);
 
@@ -616,7 +616,7 @@ spotlight_netinit(void)
   uint8_t *addr = uip_ethaddr.addr;
   mqtt_client_id[0] = '\0';
 
-  sprintf_P(mqtt_client_id, PSTR("%.4s-%02X%02X%02X%02X%02X%02X"),
+  snprintf_P(mqtt_client_id, sizeof(mqtt_client_id), PSTR("%.4s-%02X%02X%02X%02X%02X%02X"),
     CONF_HOSTNAME,
     addr[0], addr[1], addr[2],
     addr[3], addr[4], addr[5]);
