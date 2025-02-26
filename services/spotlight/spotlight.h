@@ -43,7 +43,7 @@
 #define IPADDR_LEN sizeof(uip_ipaddr_t)
 
 #define SPOTLIGHT_VALUESIZE 16
-#define SPOTLIGHT_TOPICSIZE 32
+#define SPOTLIGHT_TOPICSIZE 64
 
 enum spotlight_update
 {
@@ -55,6 +55,12 @@ enum spotlight_mode
 {
   SPOTLIGHT_MODE_NORMAL,
   SPOTLIGHT_MODE_FADE
+};
+
+enum spotlight_status
+{
+  SPOTLIGHT_STATUS_OFF,
+  SPOTLIGHT_STATUS_ON
 };
 
 typedef struct
@@ -73,10 +79,14 @@ typedef struct
 
 typedef struct
 {
-  //Current value
+  /* Current value, color and brightness */
   spotlight_rgb_color_t current_color;
-  //Target value
+  /* Target value, color and brightness */
   spotlight_rgb_color_t target_color;
+
+  /* On/Off status */
+  enum spotlight_status status;
+
   enum spotlight_mode mode;
   enum spotlight_update update;
   enum spotlight_update sendUpdate;
