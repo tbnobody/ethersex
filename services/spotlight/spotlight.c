@@ -107,9 +107,7 @@ bool dmx_connected = false;
 enum spotlight_update update;
 
 #define SPOTLIGHT_CHANNELS 10
-static spotlight_channel_t channels[SPOTLIGHT_CHANNELS] =
-  { {{0, 0, 0}, {0, 0, 0}, SPOTLIGHT_MODE_NORMAL, SPOTLIGHT_NOUPDATE,
-     SPOTLIGHT_NOUPDATE} };
+static spotlight_channel_t channels[SPOTLIGHT_CHANNELS];
 
 static mqtt_connection_config_t mqtt_connection_config = {
   .client_id = NULL,
@@ -476,6 +474,14 @@ spotlight_netinit(void)
 
   i2c_pca9685_set_mode(SPOTLIGHT_PCA9685_ADDRESS_2, SPOTLIGHT_PCA9685_EXTDRV,
                        SPOTLIGHT_PCA9685_IVRT, SPOTLIGHT_PCA9685_PRESCALER);
+
+  spotlight_channel_t init_channel_config = {
+    {0, 0, 0}, {0, 0, 0}, 
+    SPOTLIGHT_MODE_NORMAL, SPOTLIGHT_NOUPDATE, SPOTLIGHT_NOUPDATE};
+  for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
+  {
+    channels[i] = init_channel_config;
+  }
 
   SPOTDEBUG("MqTT Init");
   eeprom_restore(spotlight_params, &spotlight_params_ram,
