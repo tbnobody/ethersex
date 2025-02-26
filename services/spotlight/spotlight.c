@@ -349,17 +349,17 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
         SPOTDEBUG("MQTT set color:%d,%d,%d", r, g, b);
         if (dest > 0)
         {
-          channels[dest - 1].target.r = r;
-          channels[dest - 1].target.g = g;
-          channels[dest - 1].target.b = b;
+          channels[dest - 1].target_color.r = r;
+          channels[dest - 1].target_color.g = g;
+          channels[dest - 1].target_color.b = b;
         }
         else if (dest == 0 && !retained)
         {
           for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
           {
-            channels[i].target.r = r;
-            channels[i].target.g = g;
-            channels[i].target.b = b;
+            channels[i].target_color.r = r;
+            channels[i].target_color.g = g;
+            channels[i].target_color.b = b;
           }
         }
       }
@@ -402,24 +402,24 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
       if (dest > 0)
       {
         spotlight_hsv_color_t hsv;
-        rgbToHsv(channels[dest - 1].value, &hsv);
+        rgbToHsv(channels[dest - 1].current_color, &hsv);
         hsv.s = 1;
         if (hsv.v < 0.1 || hsv.v > 0.9)
           hsv.v = 1;
         hsv.h = (double) rand() / (double) RAND_MAX;
-        hsvToRgb(hsv, &channels[dest - 1].target);
+        hsvToRgb(hsv, &channels[dest - 1].target_color);
       }
       else
       {
         spotlight_hsv_color_t hsv;
         for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
         {
-          rgbToHsv(channels[i].value, &hsv);
+          rgbToHsv(channels[i].current_color, &hsv);
           hsv.s = 1;
           if (hsv.v < 0.1 || hsv.v > 0.9)
             hsv.v = 1;
           hsv.h = (double) rand() / (double) RAND_MAX;
-          hsvToRgb(hsv, &channels[i].target);
+          hsvToRgb(hsv, &channels[i].target_color);
         }
       }
     }
@@ -455,8 +455,8 @@ spotlight_poll_cb(void)
       char payload[7];
       sprintf_P(topic, PSTR("%s/get/%d/color"),
                 spotlight_params_ram.mqtt_topic, i + 1);
-      sprintf_P(payload, PSTR("%02hhX%02hhX%02hhX"), channels[i].value.r,
-                channels[i].value.g, channels[i].value.b);
+      sprintf_P(payload, PSTR("%02hhX%02hhX%02hhX"), channels[i].current_color.r,
+                channels[i].current_color.g, channels[i].current_color.b);
 
       mqtt_construct_publish_packet(topic, payload, sizeof(payload) - 1,
                                     MQTT_RETAIN);
@@ -590,11 +590,11 @@ spotlight_main(void)
     {
       channels[i].update = SPOTLIGHT_NOUPDATE;
       pca9685_values[3 * i + 0] =
-        pgm_read_word_near(cie_luminance_12bit + channels[i].value.r);
+        pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.r);
       pca9685_values[3 * i + 1] =
-        pgm_read_word_near(cie_luminance_12bit + channels[i].value.g);
+        pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.g);
       pca9685_values[3 * i + 2] =
-        pgm_read_word_near(cie_luminance_12bit + channels[i].value.b);
+        pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.b);
     }
 
     i2c_pca9685_set_leds_fast(SPOTLIGHT_PCA9685_ADDRESS_1, 0,
@@ -621,17 +621,17 @@ spotlight_dmx_update(void)
                                  SPOTLIGHT_CHANNELS * 3, dmx_conn_id) == 0 ?
         SPOTLIGHT_MODE_NORMAL : SPOTLIGHT_MODE_FADE;
 
-      channels[i].target.r =
+      channels[i].target_color.r =
         get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE,
                              spotlight_params_ram.dmx_offset + i * 3 + 0,
                              dmx_conn_id);
 
-      channels[i].target.g =
+      channels[i].target_color.g =
         get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE,
                              spotlight_params_ram.dmx_offset + i * 3 + 1,
                              dmx_conn_id);
 
-      channels[i].target.b =
+      channels[i].target_color.b =
         get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE,
                              spotlight_params_ram.dmx_offset + i * 3 + 2,
                              dmx_conn_id);
@@ -664,14 +664,14 @@ spotlight_process(void)
     switch (channels[i].mode)
     {
       case SPOTLIGHT_MODE_NORMAL:
-        if (channels[i].value.r != channels[i].target.r ||
-            channels[i].value.g != channels[i].target.g ||
-            channels[i].value.b != channels[i].target.b)
+        if (channels[i].current_color.r != channels[i].target_color.r ||
+            channels[i].current_color.g != channels[i].target_color.g ||
+            channels[i].current_color.b != channels[i].target_color.b)
         {
 
-          channels[i].value.r = channels[i].target.r;
-          channels[i].value.g = channels[i].target.g;
-          channels[i].value.b = channels[i].target.b;
+          channels[i].current_color.r = channels[i].target_color.r;
+          channels[i].current_color.g = channels[i].target_color.g;
+          channels[i].current_color.b = channels[i].target_color.b;
           channels[i].update = SPOTLIGHT_UPDATE;
           channels[i].sendUpdate = SPOTLIGHT_UPDATE;
           update = SPOTLIGHT_UPDATE;
@@ -684,46 +684,46 @@ spotlight_process(void)
 
       case SPOTLIGHT_MODE_FADE:
         channels[i].update = SPOTLIGHT_NOUPDATE;
-        if (channels[i].value.r > channels[i].target.r)
+        if (channels[i].current_color.r > channels[i].target_color.r)
         {
-          channels[i].value.r--;
+          channels[i].current_color.r--;
           channels[i].update = SPOTLIGHT_UPDATE;
           channels[i].sendUpdate = SPOTLIGHT_UPDATE;
           update = SPOTLIGHT_UPDATE;
         }
-        else if (channels[i].value.r < channels[i].target.r)
+        else if (channels[i].current_color.r < channels[i].target_color.r)
         {
-          channels[i].value.r++;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
-        }
-
-        if (channels[i].value.g > channels[i].target.g)
-        {
-          channels[i].value.g--;
-          channels[i].update = SPOTLIGHT_UPDATE;
-          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-          update = SPOTLIGHT_UPDATE;
-        }
-        else if (channels[i].value.g < channels[i].target.g)
-        {
-          channels[i].value.g++;
+          channels[i].current_color.r++;
           channels[i].update = SPOTLIGHT_UPDATE;
           channels[i].sendUpdate = SPOTLIGHT_UPDATE;
           update = SPOTLIGHT_UPDATE;
         }
 
-        if (channels[i].value.b > channels[i].target.b)
+        if (channels[i].current_color.g > channels[i].target_color.g)
         {
-          channels[i].value.b--;
+          channels[i].current_color.g--;
           channels[i].update = SPOTLIGHT_UPDATE;
           channels[i].sendUpdate = SPOTLIGHT_UPDATE;
           update = SPOTLIGHT_UPDATE;
         }
-        else if (channels[i].value.b < channels[i].target.b)
+        else if (channels[i].current_color.g < channels[i].target_color.g)
         {
-          channels[i].value.b++;
+          channels[i].current_color.g++;
+          channels[i].update = SPOTLIGHT_UPDATE;
+          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
+          update = SPOTLIGHT_UPDATE;
+        }
+
+        if (channels[i].current_color.b > channels[i].target_color.b)
+        {
+          channels[i].current_color.b--;
+          channels[i].update = SPOTLIGHT_UPDATE;
+          channels[i].sendUpdate = SPOTLIGHT_UPDATE;
+          update = SPOTLIGHT_UPDATE;
+        }
+        else if (channels[i].current_color.b < channels[i].target_color.b)
+        {
+          channels[i].current_color.b++;
           channels[i].update = SPOTLIGHT_UPDATE;
           channels[i].sendUpdate = SPOTLIGHT_UPDATE;
           update = SPOTLIGHT_UPDATE;

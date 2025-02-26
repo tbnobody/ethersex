@@ -74,9 +74,9 @@ typedef struct
 typedef struct
 {
   //Current value
-  spotlight_rgb_color_t value;
+  spotlight_rgb_color_t current_color;
   //Target value
-  spotlight_rgb_color_t target;
+  spotlight_rgb_color_t target_color;
   enum spotlight_mode mode;
   enum spotlight_update update;
   enum spotlight_update sendUpdate;
