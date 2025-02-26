@@ -1,9 +1,7 @@
  /*---------------------------------------------------------------------------------------------------------------------------------------------------
  * irsnd.h
  *
- * Copyright (c) 2010-2016 Frank Meyer - frank(at)fli4l.de
- *
- * $Id: irsnd.h,v 1.26 2017/02/17 09:13:07 fm Exp $
+ * Copyright (c) 2010-2020 Frank Meyer - frank(at)fli4l.de
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +27,8 @@
 #    define IRSND_GPIO_AF                       CONCAT(GPIO_AF_TIM, IRSND_TIMER_NUMBER)
 #  elif defined (ARM_STM32F10X)
 #    define IRSND_PORT_RCC                      CONCAT(RCC_APB2Periph_GPIO, IRSND_PORT_LETTER)
+#  elif  defined (ARM_STM32F30X)
+#    define IRSND_PORT_RCC                      CONCAT(RCC_AHBPeriph_GPIO, IRSND_PORT_LETTER)
 #  elif defined (ARM_STM32F4XX)
 #    define IRSND_PORT_RCC                      CONCAT(RCC_AHB1Periph_GPIO, IRSND_PORT_LETTER)
 #    define IRSND_GPIO_AF                       CONCAT(GPIO_AF_TIM, IRSND_TIMER_NUMBER)
