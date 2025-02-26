@@ -461,16 +461,12 @@ spotlight_poll_cb(void)
       mqtt_construct_publish_packet(topic, payload, sizeof(payload) - 1,
                                     MQTT_RETAIN);
       channels[i].sendUpdate = SPOTLIGHT_NOUPDATE;
+
+      /* break here to give the stack time to send the packet */
+      break;
     }
   }
 }
-
-static const mqtt_callback_config_t mqtt_callback_config PROGMEM = {
-  .connack_callback = spotlight_connack_cb,
-  .poll_callback = spotlight_poll_cb,
-  .close_callback = NULL,
-  .publish_callback = spotlight_publish_cb,
-};
 
 void
 spotlight_netinit(void)
@@ -561,7 +557,6 @@ spotlight_netinit(void)
   mqtt_connection_config.will_message_length =
     sizeof(MQTT_WILL_MESSAGE_OFFLINE) - 1;
 
-  mqtt_register_callback(&mqtt_callback_config);
   mqtt_set_connection_config(&mqtt_connection_config);
 
   //Connect to dmx-storage
@@ -756,9 +751,18 @@ spotlight_process(void)
 #endif
 }
 
+const mqtt_callback_config_t mqtt_callback_config PROGMEM = {
+    .topic = NULL,
+    .connack_callback = spotlight_connack_cb,
+    .poll_callback = spotlight_poll_cb,
+    .close_callback = NULL,
+    .publish_callback = spotlight_publish_cb,
+  };
+
 /*
 	-- Ethersex META --
 	header(services/spotlight/spotlight.h)
+	mqtt_conf(mqtt_callback_config)
 	net_init(spotlight_netinit)
 	mainloop(spotlight_main)
 	timer(1,spotlight_process())
