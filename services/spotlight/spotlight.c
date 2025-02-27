@@ -266,9 +266,11 @@ void set_channel_mode(uint8_t dest, uint8_t mode, bool retained)
     uint8_t new_mode = (mode == 1) ? SPOTLIGHT_MODE_FADE : SPOTLIGHT_MODE_NORMAL;
     if (dest > 0) {
         channels[dest - 1].mode = new_mode;
+        channels[dest - 1].sendUpdate = SPOTLIGHT_UPDATE;
     } else if (!retained) {
         for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
             channels[i].mode = new_mode;
+            channels[i].sendUpdate = SPOTLIGHT_UPDATE;
         }
     }
 }
@@ -569,6 +571,11 @@ spotlight_poll_cb(void)
             /* Publish brightness */
             snprintf_P(topic, sizeof(topic), PSTR("%s/get/%d/bright"), spotlight_params_ram.mqtt_topic, i + 1);
             payload_size = snprintf_P(payload, sizeof(payload), PSTR("%u"), channels[i].brightness);
+            mqtt_construct_publish_packet(topic, payload, payload_size, MQTT_RETAIN);
+
+            /* Publish brightness */
+            snprintf_P(topic, sizeof(topic), PSTR("%s/get/%d/mode"), spotlight_params_ram.mqtt_topic, i + 1);
+            payload_size = snprintf_P(payload, sizeof(payload), PSTR("%u"), channels[i].mode);
             mqtt_construct_publish_packet(topic, payload, payload_size, MQTT_RETAIN);
 
             channels[i].sendUpdate = SPOTLIGHT_NOUPDATE;
