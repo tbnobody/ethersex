@@ -652,41 +652,38 @@ spotlight_main(void)
 void
 spotlight_dmx_update(void)
 {
-  if (get_dmx_slot_state(CONF_ARTNET_OUTUNIVERSE, dmx_conn_id) ==
-      DMX_NEWVALUES)
+  if (get_dmx_slot_state(CONF_ARTNET_OUTUNIVERSE, dmx_conn_id) != DMX_NEWVALUES)
   {
-    /*Update values if they are really newer */
-    /*Layout for starburst is CCCCMMMMS, where C is Channel, M is Mode and S is Strobe (optional) */
-    for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
-    {
-      channels[i].mode =
-        get_dmx_channel_slot_raw(CONF_ARTNET_OUTUNIVERSE,
-                                 spotlight_params_ram.dmx_offset + i +
-                                 SPOTLIGHT_CHANNELS * 3, dmx_conn_id) == 0 ?
-        SPOTLIGHT_MODE_NORMAL : SPOTLIGHT_MODE_FADE;
-
-      channels[i].target_color.r =
-        get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE,
-                             spotlight_params_ram.dmx_offset + i * 3 + 0,
-                             dmx_conn_id);
-
-      channels[i].target_color.g =
-        get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE,
-                             spotlight_params_ram.dmx_offset + i * 3 + 1,
-                             dmx_conn_id);
-
-      channels[i].target_color.b =
-        get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE,
-                             spotlight_params_ram.dmx_offset + i * 3 + 2,
-                             dmx_conn_id);
-    }
-
-    strobo =
-      get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE,
-                           spotlight_params_ram.dmx_offset +
-                           SPOTLIGHT_CHANNELS * 3 + SPOTLIGHT_CHANNELS,
-                           dmx_conn_id) / (255 / 25);
+    return;
   }
+
+  /* Update values if they are really newer */
+  /* Layout for starburst is CCCCMMMMS, where C is Channel, M is Mode and S is Strobe (optional) */
+  for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
+  {
+    uint8_t channel_offset = spotlight_params_ram.dmx_offset + i * 3;
+
+    channels[i].mode =
+      get_dmx_channel_slot_raw(CONF_ARTNET_OUTUNIVERSE,
+                               spotlight_params_ram.dmx_offset + i +
+                               SPOTLIGHT_CHANNELS * 3, dmx_conn_id) == 0 ?
+      SPOTLIGHT_MODE_NORMAL : SPOTLIGHT_MODE_FADE;
+
+    channels[i].target_color.r =
+      get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE, channel_offset + 0, dmx_conn_id);
+
+    channels[i].target_color.g =
+      get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE, channel_offset + 1, dmx_conn_id);
+
+    channels[i].target_color.b =
+      get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE, channel_offset + 2, dmx_conn_id);
+  }
+
+  strobo =
+    get_dmx_channel_slot(CONF_ARTNET_OUTUNIVERSE,
+                         spotlight_params_ram.dmx_offset +
+                         SPOTLIGHT_CHANNELS * 3 + SPOTLIGHT_CHANNELS,
+                         dmx_conn_id) / (255 / 25);
 }
 
 uint8_t
