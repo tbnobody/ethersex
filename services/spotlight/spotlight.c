@@ -617,37 +617,36 @@ spotlight_netinit(void)
 void
 spotlight_main(void)
 {
-  if (update == SPOTLIGHT_UPDATE)
-  {                             /*Only transmit if at least one channels has been updated */
-    update = SPOTLIGHT_NOUPDATE;
-
-    uint16_t pca9685_values[SPOTLIGHT_CHANNELS * 3];    // 3 colors / channel
-    for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
-    {
-      channels[i].update = SPOTLIGHT_NOUPDATE;
-      if (channels[i].status == SPOTLIGHT_STATUS_OFF)
-      {
-        pca9685_values[3 * i + 0] = 0;
-        pca9685_values[3 * i + 1] = 0;
-        pca9685_values[3 * i + 2] = 0;
-      }
-      else
-      {
-        pca9685_values[3 * i + 0] =
-          pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.r);
-        pca9685_values[3 * i + 1] =
-          pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.g);
-        pca9685_values[3 * i + 2] =
-          pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.b);
-      }
-    }
-
-    i2c_pca9685_set_leds_fast(SPOTLIGHT_PCA9685_ADDRESS_1, 0,
-                              15, pca9685_values);
-
-    i2c_pca9685_set_leds_fast(SPOTLIGHT_PCA9685_ADDRESS_2, 0,
-                              15, &pca9685_values[15]);
+  if (update != SPOTLIGHT_UPDATE)
+  {
+    /* Only transmit if at least one channels has been updated */
+    return;
   }
+
+  update = SPOTLIGHT_NOUPDATE;
+  uint16_t pca9685_values[SPOTLIGHT_CHANNELS * 3];    // 3 colors / channel
+
+  for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
+  {
+    channels[i].update = SPOTLIGHT_NOUPDATE;
+
+    if (channels[i].status == SPOTLIGHT_STATUS_OFF)
+    {
+      memset(&pca9685_values[3 * i], 0, 3 * sizeof(uint16_t)); // Set all colors to 0
+    }
+    else
+    {
+      pca9685_values[3 * i + 0] =
+        pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.r);
+      pca9685_values[3 * i + 1] =
+        pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.g);
+      pca9685_values[3 * i + 2] =
+        pgm_read_word_near(cie_luminance_12bit + channels[i].current_color.b);
+    }
+  }
+
+  i2c_pca9685_set_leds_fast(SPOTLIGHT_PCA9685_ADDRESS_1, 0, 15, pca9685_values);
+  i2c_pca9685_set_leds_fast(SPOTLIGHT_PCA9685_ADDRESS_2, 0, 15, &pca9685_values[15]);
 }
 
 void
