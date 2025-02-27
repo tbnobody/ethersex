@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2011 by Maximilian Güntner <maximilian.guentner@gmail.com>
+ * Copyright (c) 2018-2025 by Thomas Basler <thomas@familie-basler.net>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,9 +23,9 @@
 #ifndef SPOTLIGHT_H
 #define SPOTLIGHT_H
 
-#include <stdint.h>
 #include "config.h"
 #include "protocols/uip/uip.h"
+#include <stdint.h>
 
 #ifdef SPOTLIGHT_SUPPORT
 
@@ -45,60 +45,57 @@
 #define SPOTLIGHT_VALUESIZE 16
 #define SPOTLIGHT_TOPICSIZE 64
 
-enum spotlight_update
-{
-  SPOTLIGHT_UPDATE,
-  SPOTLIGHT_NOUPDATE
+enum spotlight_update {
+    SPOTLIGHT_UPDATE,
+    SPOTLIGHT_NOUPDATE
 };
 
-enum spotlight_mode
-{
-  SPOTLIGHT_MODE_NORMAL,
-  SPOTLIGHT_MODE_FADE
+enum spotlight_mode {
+    SPOTLIGHT_MODE_NORMAL,
+    SPOTLIGHT_MODE_FADE
 };
 
-enum spotlight_status
-{
-  SPOTLIGHT_STATUS_OFF,
-  SPOTLIGHT_STATUS_ON
+enum spotlight_status {
+    SPOTLIGHT_STATUS_OFF,
+    SPOTLIGHT_STATUS_ON
 };
 
 typedef struct
 {
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 } spotlight_rgb_color_t;
 
 typedef struct
 {
-  double h;
-  double s;
-  double v;
+    double h;
+    double s;
+    double v;
 } spotlight_hsv_color_t;
 
 typedef struct
 {
-  /* Current value, color and brightness */
-  spotlight_rgb_color_t current_color;
-  /* Target value, color and brightness */
-  spotlight_rgb_color_t target_color;
+    /* Current value, color and brightness */
+    spotlight_rgb_color_t current_color;
+    /* Target value, color and brightness */
+    spotlight_rgb_color_t target_color;
 
-  /* On/Off status */
-  enum spotlight_status status;
+    /* On/Off status */
+    enum spotlight_status status;
 
-  enum spotlight_mode mode;
-  enum spotlight_update update;
-  enum spotlight_update sendUpdate;
+    enum spotlight_mode mode;
+    enum spotlight_update update;
+    enum spotlight_update sendUpdate;
 } spotlight_channel_t;
 
 typedef struct
 {
-  uint8_t mqtt_ip[IPADDR_LEN];
-  char mqtt_user[SPOTLIGHT_VALUESIZE];
-  char mqtt_pass[SPOTLIGHT_VALUESIZE];
-  char mqtt_topic[SPOTLIGHT_TOPICSIZE];
-  uint8_t dmx_offset;
+    uint8_t mqtt_ip[IPADDR_LEN];
+    char mqtt_user[SPOTLIGHT_VALUESIZE];
+    char mqtt_pass[SPOTLIGHT_VALUESIZE];
+    char mqtt_topic[SPOTLIGHT_TOPICSIZE];
+    uint8_t dmx_offset;
 } spotlight_params_t;
 
 extern spotlight_params_t spotlight_params_ram;
