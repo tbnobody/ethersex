@@ -779,12 +779,12 @@ spotlight_process(void)
 }
 
 const mqtt_callback_config_t mqtt_callback_config PROGMEM = {
-    .topic = NULL,
-    .connack_callback = spotlight_connack_cb,
-    .poll_callback = spotlight_poll_cb,
-    .close_callback = NULL,
-    .publish_callback = spotlight_publish_cb,
-  };
+  .topic = NULL,
+  .connack_callback = spotlight_connack_cb,
+  .poll_callback = spotlight_poll_cb,
+  .close_callback = NULL,
+  .publish_callback = spotlight_publish_cb,
+};
 
 /*
 	-- Ethersex META --
