@@ -246,6 +246,85 @@ rgbToHsv(spotlight_rgb_color_t rgb, spotlight_hsv_color_t * hsv)
 }
 
 void
+set_channel_random(uint8_t dest)
+{
+  spotlight_hsv_color_t hsv;
+  if (dest > 0)
+  {
+    rgbToHsv(channels[dest - 1].current_color, &hsv);
+    hsv.s = 1;
+    if (hsv.v < 0.1 || hsv.v > 0.9)
+      hsv.v = 1;
+    hsv.h = (double) rand() / (double) RAND_MAX;
+    hsvToRgb(hsv, &channels[dest - 1].target_color);
+  }
+  else
+  {
+    for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
+    {
+      rgbToHsv(channels[i].current_color, &hsv);
+      hsv.s = 1;
+      if (hsv.v < 0.1 || hsv.v > 0.9)
+        hsv.v = 1;
+      hsv.h = (double) rand() / (double) RAND_MAX;
+      hsvToRgb(hsv, &channels[i].target_color);
+    }
+  }
+}
+
+void
+set_channel_mode(uint8_t dest, uint8_t mode, bool retained)
+{
+  uint8_t new_mode = (mode == 1) ? SPOTLIGHT_MODE_FADE : SPOTLIGHT_MODE_NORMAL;
+  if (dest > 0)
+  {
+    channels[dest - 1].mode = new_mode;
+  }
+  else if (!retained)
+  {
+    for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
+    {
+      channels[i].mode = new_mode;
+    }
+  }
+}
+
+void
+set_channel_color(uint8_t dest, uint8_t r, uint8_t g, uint8_t b, bool retained)
+{
+  if (dest > 0)
+  {
+    channels[dest - 1].target_color = (spotlight_rgb_color_t){r, g, b};
+  }
+  else if (!retained)
+  {
+    for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
+    {
+      channels[i].target_color = (spotlight_rgb_color_t){r, g, b};
+    }
+  }
+}
+
+void
+set_channel_status(uint8_t dest, uint8_t status, bool retained)
+{
+  uint8_t new_status = (status == 1) ? SPOTLIGHT_STATUS_ON : SPOTLIGHT_STATUS_OFF;
+  if (dest > 0)
+  {
+    channels[dest - 1].status = new_status;
+    channels[dest - 1].sendUpdate = SPOTLIGHT_UPDATE;
+  }
+  else if (!retained)
+  {
+    for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
+    {
+      channels[i].status = new_status;
+      channels[i].sendUpdate = SPOTLIGHT_UPDATE;
+    }
+  }
+}
+
+void
 spotlight_subscribe_color()
 {
   if (!mqtt_is_connected()) {
@@ -312,14 +391,10 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
 {
   // This callback will be executed when topic is received
   char *strvalue = malloc(topic_length + 1);
-  if (strvalue == NULL)
+  if (!strvalue)
     goto out;
   memcpy(strvalue, topic, topic_length);
   strvalue[topic_length] = '\0';
-
-  uint8_t ret;
-  uint8_t dest;
-  char type[16];
 
   SPOTDEBUG("MQTT Received (%d):%s", retained, strvalue);
 
@@ -330,11 +405,10 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
     {
       free(strvalue);
       strvalue = malloc(payload_length + 1);
-      if (strvalue == NULL)
+      if (!strvalue)
         goto out;
       memcpy(strvalue, payload, payload_length);
       strvalue[payload_length] = '\0';
-
       strobo = atoi(strvalue);
     }
     else
@@ -344,136 +418,71 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
     goto out;
   }
 
-  ret = sscanf(strvalue, mqtt_subscribe_set_format, &dest, type);
+  uint8_t dest;
+  char type[16];
 
-  if (ret == 2 && dest <= SPOTLIGHT_CHANNELS)
-  {
-    SPOTDEBUG("MQTT set CHANNEL:%d,%s", dest, type);
-    free(strvalue);
-    strvalue = malloc(payload_length + 1);
-    if (strvalue == NULL)
-      goto out;
-    memcpy(strvalue, payload, payload_length);
-    strvalue[payload_length] = '\0';
-
-    if (!strcmp_P(type, PSTR("color")))
-    {
-      uint8_t r, g, b;
-      ret = sscanf_P(strvalue, PSTR("%2hhx%2hhx%2hhx"), &r, &g, &b);
-      if (ret == 3)
-      {
-        SPOTDEBUG("MQTT set color:%d,%d,%d", r, g, b);
-        if (dest > 0)
-        {
-          channels[dest - 1].target_color.r = r;
-          channels[dest - 1].target_color.g = g;
-          channels[dest - 1].target_color.b = b;
-        }
-        else if (dest == 0 && !retained)
-        {
-          for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
-          {
-            channels[i].target_color.r = r;
-            channels[i].target_color.g = g;
-            channels[i].target_color.b = b;
-          }
-        }
-      }
-      else
-      {
-        SPOTDEBUG("MQTT invalid color");
-        goto out;
-      }
-    }
-    else if (!strcmp_P(type, PSTR("mode")))
-    {
-      uint8_t mode;
-      ret = sscanf_P(strvalue, PSTR("%1hhi"), &mode);
-      if (ret == 1)
-      {
-        SPOTDEBUG("MQTT set mode:%d", mode);
-        if (dest > 0)
-        {
-          channels[dest - 1].mode =
-            mode == 1 ? SPOTLIGHT_MODE_FADE : SPOTLIGHT_MODE_NORMAL;
-        }
-        else if (dest == 0 && !retained)
-        {
-          for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
-          {
-            channels[i].mode =
-              mode == 1 ? SPOTLIGHT_MODE_FADE : SPOTLIGHT_MODE_NORMAL;
-          }
-        }
-      }
-      else
-      {
-        SPOTDEBUG("MQTT invalid mode");
-        goto out;
-      }
-    }
-    else if (!strcmp_P(type, PSTR("switch")))
-    {
-        uint8_t status;
-        ret = sscanf_P(strvalue, PSTR("%1hhi"), &status);
-        if (ret == 1)
-        {
-          SPOTDEBUG("MQTT set status:%d", status);
-          if (dest > 0)
-          {
-            channels[dest - 1].status =
-              status == 1 ? SPOTLIGHT_STATUS_ON : SPOTLIGHT_STATUS_OFF;
-            channels[dest - 1].sendUpdate = SPOTLIGHT_UPDATE;
-          }
-          else if (dest == 0 && !retained)
-          {
-            for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
-            {
-              channels[i].status =
-                status == 1 ? SPOTLIGHT_STATUS_ON : SPOTLIGHT_STATUS_OFF;
-              channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-            }
-          }
-          update = SPOTLIGHT_UPDATE;
-        }
-        else
-        {
-          SPOTDEBUG("MQTT invalid status");
-          goto out;
-        }
-    }
-    else if (!strcmp_P(type, PSTR("rand")) && !retained)
-    {
-      SPOTDEBUG("MQTT set random");
-      if (dest > 0)
-      {
-        spotlight_hsv_color_t hsv;
-        rgbToHsv(channels[dest - 1].current_color, &hsv);
-        hsv.s = 1;
-        if (hsv.v < 0.1 || hsv.v > 0.9)
-          hsv.v = 1;
-        hsv.h = (double) rand() / (double) RAND_MAX;
-        hsvToRgb(hsv, &channels[dest - 1].target_color);
-      }
-      else
-      {
-        spotlight_hsv_color_t hsv;
-        for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
-        {
-          rgbToHsv(channels[i].current_color, &hsv);
-          hsv.s = 1;
-          if (hsv.v < 0.1 || hsv.v > 0.9)
-            hsv.v = 1;
-          hsv.h = (double) rand() / (double) RAND_MAX;
-          hsvToRgb(hsv, &channels[i].target_color);
-        }
-      }
-    }
-  }
-  else
+  if (sscanf(strvalue, mqtt_subscribe_set_format, &dest, type) != 2 || dest > SPOTLIGHT_CHANNELS)
   {
     SPOTDEBUG("MQTT set type unkown");
     goto out;
+  }
+
+  SPOTDEBUG("MQTT set CHANNEL:%d,%s", dest, type);
+  free(strvalue);
+  strvalue = malloc(payload_length + 1);
+  if (!strvalue)
+    goto out;
+  memcpy(strvalue, payload, payload_length);
+  strvalue[payload_length] = '\0';
+
+  if (!strcmp_P(type, PSTR("color")))
+  {
+    uint8_t r, g, b;
+    if (sscanf_P(strvalue, PSTR("%2hhx%2hhx%2hhx"), &r, &g, &b) == 3)
+    {
+      SPOTDEBUG("MQTT set color:%d,%d,%d", r, g, b);
+      set_channel_color(dest, r, g, b, retained);
+    }
+    else
+    {
+      SPOTDEBUG("MQTT invalid color");
+    }
+  }
+  else if (!strcmp_P(type, PSTR("mode")))
+  {
+    uint8_t mode;
+    if (sscanf_P(strvalue, PSTR("%1hhi"), &mode) == 1)
+    {
+      SPOTDEBUG("MQTT set mode:%d", mode);
+      set_channel_mode(dest, mode, retained);
+    }
+    else
+    {
+      SPOTDEBUG("MQTT invalid mode");
+    }
+  }
+  else if (!strcmp_P(type, PSTR("switch")))
+  {
+    uint8_t status;
+    if (sscanf_P(strvalue, PSTR("%1hhi"), &status) == 1)
+    {
+      SPOTDEBUG("MQTT set status:%d", status);
+      set_channel_status(dest, status, retained);
+      update = SPOTLIGHT_UPDATE;
+    }
+    else
+    {
+      SPOTDEBUG("MQTT invalid status");
+    }
+  }
+  else if (!strcmp_P(type, PSTR("rand")) && !retained)
+  {
+    SPOTDEBUG("MQTT set random");
+    set_channel_random(dest);
+  }
+  else
+  {
+    SPOTDEBUG("MQTT unknown command");
   }
 
 out:
