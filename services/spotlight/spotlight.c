@@ -703,9 +703,7 @@ spotlight_process(void)
   for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++)
   {
     channels[i].update = SPOTLIGHT_NOUPDATE;
-    if (channels[i].current_color.r != channels[i].target_color.r ||
-        channels[i].current_color.g != channels[i].target_color.g ||
-        channels[i].current_color.b != channels[i].target_color.b)
+    if (memcmp(&channels[i].current_color, &channels[i].target_color, sizeof(spotlight_rgb_color_t)) != 0)
     {
       channels[i].update = SPOTLIGHT_UPDATE;
       channels[i].sendUpdate = SPOTLIGHT_UPDATE;
@@ -715,43 +713,18 @@ spotlight_process(void)
     switch (channels[i].mode)
     {
       case SPOTLIGHT_MODE_NORMAL:
-        channels[i].current_color.r = channels[i].target_color.r;
-        channels[i].current_color.g = channels[i].target_color.g;
-        channels[i].current_color.b = channels[i].target_color.b;
+        channels[i].current_color = channels[i].target_color;
         break;
 
       case SPOTLIGHT_MODE_FADE:
-        // Red
-        if (channels[i].current_color.r > channels[i].target_color.r)
-        {
-          channels[i].current_color.r--;
-        }
-        else if (channels[i].current_color.r < channels[i].target_color.r)
-        {
-          channels[i].current_color.r++;
-        }
-
-        // Green
-        if (channels[i].current_color.g > channels[i].target_color.g)
-        {
-          channels[i].current_color.g--;
-        }
-        else if (channels[i].current_color.g < channels[i].target_color.g)
-        {
-          channels[i].current_color.g++;
-        }
-
-        // Blue
-        if (channels[i].current_color.b > channels[i].target_color.b)
-        {
-          channels[i].current_color.b--;
-        }
-        else if (channels[i].current_color.b < channels[i].target_color.b)
-        {
-          channels[i].current_color.b++;
-        }
+        // Smoothly transition each color channel
+        channels[i].current_color.r += (channels[i].current_color.r < channels[i].target_color.r) - 
+                                       (channels[i].current_color.r > channels[i].target_color.r);
+        channels[i].current_color.g += (channels[i].current_color.g < channels[i].target_color.g) - 
+                                       (channels[i].current_color.g > channels[i].target_color.g);
+        channels[i].current_color.b += (channels[i].current_color.b < channels[i].target_color.b) - 
+                                       (channels[i].current_color.b > channels[i].target_color.b);
         break;
-
     }
   }
 
@@ -760,16 +733,16 @@ spotlight_process(void)
    * Control all channels of a PCA9685 using the output enable.
    * Value range: 1-25 (results in 1hz - 25hz)
    */
-  static uint8_t pca9685_strobo_counter = 0;
-  if (strobo * 2 > 0 && strobo * 2 <= 50)
+  static uint8_t strobo_counter = 0;
+  uint8_t strobo_limit = strobo * 2;
+
+  if (strobo_limit > 0 && strobo_limit <= 50)
   {
-    if (pca9685_strobo_counter >= 50 / (strobo * 2))
+    if (++strobo_counter >= 50 / strobo_limit)
     {
       i2c_pca9685_output_enable(TOGGLE);
-      pca9685_strobo_counter = 0;
+      strobo_counter = 0;
     }
-    pca9685_strobo_counter++;
-    pca9685_strobo_counter %= 50;
   }
   else
   {
