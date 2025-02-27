@@ -49,6 +49,8 @@ spotlight_params_t spotlight_params_ram;
 
 #define MQTT_RETAIN true
 #define MQTT_SUBSCRIBE_SET_COLOR_SUFFIX "/set/+/color"
+#define MQTT_SUBSCRIBE_SET_BASECOLOR_SUFFIX "/set/+/bcolor"
+#define MQTT_SUBSCRIBE_SET_BRIGHTNESS_SUFFIX "/set/+/bright"
 #define MQTT_SUBSCRIBE_SET_MODE_SUFFIX "/set/+/mode"
 #define MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX "/set/+/rand"
 #define MQTT_SUBSCRIBE_SET_SWITCH_SUFFIX "/set/+/switch"
@@ -60,6 +62,8 @@ spotlight_params_t spotlight_params_ram;
 #define MQTT_WILL_MESSAGE_ONLINE "online"
 
 char* mqtt_subscribe_set_color_topic;
+char* mqtt_subscribe_set_bcolor_topic;
+char* mqtt_subscribe_set_brightness_topic;
 char* mqtt_subscribe_set_mode_topic;
 char* mqtt_subscribe_set_random_topic;
 char* mqtt_subscribe_set_switch_topic;
@@ -75,6 +79,7 @@ char* mqtt_will_topic;
 char mqtt_client_id[12 + 4 + 1 + 1]; // 12 chars for mac, 4 for hostname, 1 for dash, 1 for null byte
 
 bool send_online_lwt = false;
+bool subscribe_complete = false;
 uint8_t strobo = 0;
 
 const uint16_t cie_luminance_12bit[256] PROGMEM = {
@@ -279,6 +284,42 @@ void set_channel_color(uint8_t dest, uint8_t r, uint8_t g, uint8_t b, bool retai
     }
 }
 
+void dim_channel_color(uint8_t dest, bool retained)
+{
+    if (dest > 0) {
+        double dim_factor = (double)channels[dest - 1].brightness / 255;
+        set_channel_color(
+            dest,
+            channels[dest - 1].base_color.r * dim_factor,
+            channels[dest - 1].base_color.g * dim_factor,
+            channels[dest - 1].base_color.b * dim_factor,
+            retained);
+    } else if (!retained) {
+        for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
+            double dim_factor = (double)channels[i].brightness / 255;
+            set_channel_color(
+                dest,
+                channels[i].base_color.r * dim_factor,
+                channels[i].base_color.g * dim_factor,
+                channels[i].base_color.b * dim_factor,
+                retained);
+        }
+    }
+}
+
+void set_channel_basecolor(uint8_t dest, uint8_t r, uint8_t g, uint8_t b, bool retained)
+{
+    if (dest > 0) {
+        channels[dest - 1].base_color = (spotlight_rgb_color_t) { r, g, b };
+        channels[dest - 1].sendUpdate = SPOTLIGHT_UPDATE;
+    } else if (!retained) {
+        for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
+            channels[i].base_color = (spotlight_rgb_color_t) { r, g, b };
+            channels[i].sendUpdate = SPOTLIGHT_UPDATE;
+        }
+    }
+}
+
 void set_channel_status(uint8_t dest, uint8_t status, bool retained)
 {
     uint8_t new_status = (status == 1) ? SPOTLIGHT_STATUS_ON : SPOTLIGHT_STATUS_OFF;
@@ -293,6 +334,19 @@ void set_channel_status(uint8_t dest, uint8_t status, bool retained)
     }
 }
 
+void set_channel_brightness(uint8_t dest, uint8_t brightness, bool retained)
+{
+    if (dest > 0) {
+        channels[dest - 1].brightness = brightness;
+        channels[dest - 1].sendUpdate = SPOTLIGHT_UPDATE;
+    } else if (!retained) {
+        for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
+            channels[i].brightness = brightness;
+            channels[i].sendUpdate = SPOTLIGHT_UPDATE;
+        }
+    }
+}
+
 void spotlight_subscribe_color()
 {
     if (!mqtt_is_connected()) {
@@ -300,6 +354,12 @@ void spotlight_subscribe_color()
     }
     SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_color_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_color_topic);
+
+    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_bcolor_topic);
+    mqtt_construct_subscribe_packet(mqtt_subscribe_set_bcolor_topic);
+
+    SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_brightness_topic);
+    mqtt_construct_subscribe_packet(mqtt_subscribe_set_brightness_topic);
 }
 
 void spotlight_subscribe_mode()
@@ -330,6 +390,7 @@ void spotlight_subscribe_random()
     }
     SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_random_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_random_topic);
+    subscribe_complete = true;
 }
 
 static void
@@ -341,6 +402,7 @@ spotlight_connack_cb(void)
     scheduler_delete_timer(timer_switch);
     scheduler_delete_timer(timer_random);
 
+    // Bad hack to allow sending the packages. If done all at once it crashes
     timer_color = scheduler_add_oneshot_timer(spotlight_subscribe_color, 1 * CONF_MTICKS_PER_SEC);
     timer_mode = scheduler_add_oneshot_timer(spotlight_subscribe_mode, 2 * CONF_MTICKS_PER_SEC);
     timer_switch = scheduler_add_oneshot_timer(spotlight_subscribe_switch, 3 * CONF_MTICKS_PER_SEC);
@@ -401,9 +463,31 @@ static void spotlight_publish_cb(char const* topic, uint16_t topic_length, void 
         if (sscanf_P(strvalue, PSTR("%2hhx%2hhx%2hhx"), &r, &g, &b) == 3) {
             SPOTDEBUG("MQTT set color:%d,%d,%d", r, g, b);
             set_channel_color(dest, r, g, b, retained);
+            set_channel_basecolor(dest, r, g, b, retained);
             set_channel_status(dest, 1, retained);
+            set_channel_brightness(dest, 255, retained);
         } else {
             SPOTDEBUG("MQTT invalid color");
+        }
+
+    } else if (!strcmp_P(type, PSTR("bcolor"))) {
+        uint8_t r, g, b;
+        if (sscanf_P(strvalue, PSTR("%2hhx%2hhx%2hhx"), &r, &g, &b) == 3) {
+            SPOTDEBUG("MQTT set bcolor:%d,%d,%d", r, g, b);
+            set_channel_basecolor(dest, r, g, b, retained);
+            dim_channel_color(dest, retained);
+        } else {
+            SPOTDEBUG("MQTT invalid bcolor");
+        }
+
+    } else if (!strcmp_P(type, PSTR("bright"))) {
+        uint8_t brightness;
+        if (sscanf_P(strvalue, PSTR("%3hhi"), &brightness) == 1) {
+            SPOTDEBUG("MQTT set brightness:%d", brightness);
+            set_channel_brightness(dest, brightness, retained);
+            dim_channel_color(dest, retained);
+        } else {
+            SPOTDEBUG("MQTT invalid brightness");
         }
 
     } else if (!strcmp_P(type, PSTR("mode"))) {
@@ -442,6 +526,12 @@ out:
 static void
 spotlight_poll_cb(void)
 {
+    // This is a bad hack as the MCU crashed when this method
+    // is intercepded by a subscribe packet
+    if (!subscribe_complete) {
+        return;
+    }
+
     if (send_online_lwt) {
         mqtt_construct_publish_packet(mqtt_will_topic, MQTT_WILL_MESSAGE_ONLINE,
             sizeof(MQTT_WILL_MESSAGE_ONLINE) - 1, MQTT_RETAIN);
@@ -461,13 +551,24 @@ spotlight_poll_cb(void)
                 channels[i].current_color.r,
                 channels[i].current_color.g,
                 channels[i].current_color.b);
+            mqtt_construct_publish_packet(topic, payload, payload_size, MQTT_RETAIN);
 
+            /* Publish base color */
+            snprintf_P(topic, sizeof(topic), PSTR("%s/get/%d/bcolor"), spotlight_params_ram.mqtt_topic, i + 1);
+            payload_size = snprintf_P(payload, sizeof(payload), PSTR("%02hhX%02hhX%02hhX"),
+                channels[i].base_color.r,
+                channels[i].base_color.g,
+                channels[i].base_color.b);
             mqtt_construct_publish_packet(topic, payload, payload_size, MQTT_RETAIN);
 
             /* Publish status */
             snprintf_P(topic, sizeof(topic), PSTR("%s/get/%d/status"), spotlight_params_ram.mqtt_topic, i + 1);
             payload_size = snprintf_P(payload, sizeof(payload), PSTR("%u"), channels[i].status);
+            mqtt_construct_publish_packet(topic, payload, payload_size, MQTT_RETAIN);
 
+            /* Publish brightness */
+            snprintf_P(topic, sizeof(topic), PSTR("%s/get/%d/bright"), spotlight_params_ram.mqtt_topic, i + 1);
+            payload_size = snprintf_P(payload, sizeof(payload), PSTR("%u"), channels[i].brightness);
             mqtt_construct_publish_packet(topic, payload, payload_size, MQTT_RETAIN);
 
             channels[i].sendUpdate = SPOTLIGHT_NOUPDATE;
@@ -487,8 +588,8 @@ void spotlight_netinit(void)
         SPOTLIGHT_PCA9685_IVRT, SPOTLIGHT_PCA9685_PRESCALER);
 
     spotlight_channel_t init_channel_config = {
-        { 0, 0, 0 }, { 0, 0, 0 },
-        SPOTLIGHT_STATUS_ON, SPOTLIGHT_MODE_NORMAL, SPOTLIGHT_NOUPDATE, SPOTLIGHT_NOUPDATE
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        255, SPOTLIGHT_STATUS_ON, SPOTLIGHT_MODE_NORMAL, SPOTLIGHT_NOUPDATE, SPOTLIGHT_UPDATE
     };
     for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
         channels[i] = init_channel_config;
@@ -500,6 +601,8 @@ void spotlight_netinit(void)
     // Generate MQTT topics
     const char* topic_suffixes[] = {
         PSTR(MQTT_SUBSCRIBE_SET_COLOR_SUFFIX),
+        PSTR(MQTT_SUBSCRIBE_SET_BASECOLOR_SUFFIX),
+        PSTR(MQTT_SUBSCRIBE_SET_BRIGHTNESS_SUFFIX),
         PSTR(MQTT_SUBSCRIBE_SET_MODE_SUFFIX),
         PSTR(MQTT_SUBSCRIBE_SET_SWITCH_SUFFIX),
         PSTR(MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX),
@@ -509,6 +612,8 @@ void spotlight_netinit(void)
     };
     char** mqtt_topics[] = {
         &mqtt_subscribe_set_color_topic,
+        &mqtt_subscribe_set_bcolor_topic,
+        &mqtt_subscribe_set_brightness_topic,
         &mqtt_subscribe_set_mode_topic,
         &mqtt_subscribe_set_switch_topic,
         &mqtt_subscribe_set_random_topic,
