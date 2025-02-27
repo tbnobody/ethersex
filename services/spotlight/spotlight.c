@@ -51,25 +51,25 @@ spotlight_params_t spotlight_params_ram;
 #define MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX "/set/+/rand"
 #define MQTT_SUBSCRIBE_SET_SWITCH_SUFFIX "/set/+/switch"
 #define MQTT_SUBSCRIBE_SET_STROBO_SUFFIX "/set/strobo"
-
 #define MQTT_SUBSCRIBE_SET_FORMAT "/set/%2hhi/%6s"
+
 #define MQTT_WILL_TOPIC_SUFFIX "/status/lwt"
 #define MQTT_WILL_MESSAGE_OFFLINE "offline"
 #define MQTT_WILL_MESSAGE_ONLINE "online"
 
 char *mqtt_subscribe_set_color_topic;
 char *mqtt_subscribe_set_mode_topic;
-char *mqtt_subscribe_set_switch_topic;
 char *mqtt_subscribe_set_random_topic;
+char *mqtt_subscribe_set_switch_topic;
+char *mqtt_subscribe_set_strobo_topic;
+char *mqtt_subscribe_set_format;
 
 int8_t timer_color = 0;
 int8_t timer_mode = 0;
 int8_t timer_switch = 0;
 int8_t timer_random = 0;
 
-char *mqtt_subscribe_set_format;
 char *mqtt_will_topic;
-char *mqtt_strobo_topic;
 char mqtt_client_id[12 + 4 + 1 + 1]; // 12 chars for mac, 4 for hostname, 1 for dash, 1 for null byte
 
 bool send_online_lwt = false;
@@ -343,8 +343,8 @@ spotlight_subscribe_mode()
   SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_mode_topic);
   mqtt_construct_subscribe_packet(mqtt_subscribe_set_mode_topic);
 
-  SPOTDEBUG("MQTT Subscribe: %s", mqtt_strobo_topic);
-  mqtt_construct_subscribe_packet(mqtt_strobo_topic);
+  SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_strobo_topic);
+  mqtt_construct_subscribe_packet(mqtt_subscribe_set_strobo_topic);
 }
 
 void
@@ -398,7 +398,7 @@ spotlight_publish_cb(char const *topic, uint16_t topic_length,
 
   SPOTDEBUG("MQTT Received (%d):%s", retained, strvalue);
 
-  if (!strcmp(strvalue, mqtt_strobo_topic))
+  if (!strcmp(strvalue, mqtt_subscribe_set_strobo_topic))
   {
     SPOTDEBUG("MQTT set STROBO");
     if (payload_length > 0)
@@ -556,76 +556,34 @@ spotlight_netinit(void)
   eeprom_restore(spotlight_params, &spotlight_params_ram,
                  sizeof(spotlight_params_t));
 
-  uip_ipaddr(&mqtt_connection_config.target_ip,
-             spotlight_params_ram.mqtt_ip[0],
-             spotlight_params_ram.mqtt_ip[1],
-             spotlight_params_ram.mqtt_ip[2],
-             spotlight_params_ram.mqtt_ip[3]);
+  // Generate MQTT topics
+  const char *topic_suffixes[] = {
+    PSTR(MQTT_SUBSCRIBE_SET_COLOR_SUFFIX),
+    PSTR(MQTT_SUBSCRIBE_SET_MODE_SUFFIX),
+    PSTR(MQTT_SUBSCRIBE_SET_SWITCH_SUFFIX),
+    PSTR(MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX),
+    PSTR(MQTT_SUBSCRIBE_SET_FORMAT),
+    PSTR(MQTT_SUBSCRIBE_SET_STROBO_SUFFIX),
+    PSTR(MQTT_WILL_TOPIC_SUFFIX)
+  };
+  char **mqtt_topics[] = {
+    &mqtt_subscribe_set_color_topic,
+    &mqtt_subscribe_set_mode_topic,
+    &mqtt_subscribe_set_switch_topic,
+    &mqtt_subscribe_set_random_topic,
+    &mqtt_subscribe_set_format,
+    &mqtt_subscribe_set_strobo_topic,
+    &mqtt_will_topic
+  };
 
-  mqtt_connection_config.user = spotlight_params_ram.mqtt_user;
-  mqtt_connection_config.pass = spotlight_params_ram.mqtt_pass;
+  for (size_t i = 0; i < sizeof(topic_suffixes) / sizeof(topic_suffixes[0]); i++)
+  {
+    *mqtt_topics[i] = malloc(strlen(spotlight_params_ram.mqtt_topic) + strlen_P(topic_suffixes[i]) + 1);
+    strcpy(*mqtt_topics[i], spotlight_params_ram.mqtt_topic);
+    strcat_P(*mqtt_topics[i], topic_suffixes[i]);
+  }
 
-  // init base topic
-  // Assemble Color Set Topic
-  mqtt_subscribe_set_color_topic =
-    malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_COLOR_SUFFIX)) + 1);
-  mqtt_subscribe_set_color_topic[0] = '\0';
-  strncpy(mqtt_subscribe_set_color_topic, spotlight_params_ram.mqtt_topic,
-          strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_subscribe_set_color_topic, PSTR(MQTT_SUBSCRIBE_SET_COLOR_SUFFIX));
-
-  // Assemble Mode Set Topic
-  mqtt_subscribe_set_mode_topic =
-    malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_MODE_SUFFIX)) + 1);
-  mqtt_subscribe_set_mode_topic[0] = '\0';
-  strncpy(mqtt_subscribe_set_mode_topic, spotlight_params_ram.mqtt_topic,
-          strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_subscribe_set_mode_topic, PSTR(MQTT_SUBSCRIBE_SET_MODE_SUFFIX));
-
-  // Assemble Switch Set Topic
-  mqtt_subscribe_set_switch_topic =
-    malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_SWITCH_SUFFIX)) + 1);
-  mqtt_subscribe_set_switch_topic[0] = '\0';
-  strncpy(mqtt_subscribe_set_switch_topic, spotlight_params_ram.mqtt_topic,
-          strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_subscribe_set_switch_topic, PSTR(MQTT_SUBSCRIBE_SET_SWITCH_SUFFIX));
-
-  // Assemble Random Set Topic
-  mqtt_subscribe_set_random_topic =
-    malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX)) + 1);
-  mqtt_subscribe_set_random_topic[0] = '\0';
-  strncpy(mqtt_subscribe_set_random_topic, spotlight_params_ram.mqtt_topic,
-          strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_subscribe_set_random_topic, PSTR(MQTT_SUBSCRIBE_SET_RANDOM_SUFFIX));
-
-  mqtt_subscribe_set_format =
-    malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_FORMAT)) + 1);
-  mqtt_subscribe_set_format[0] = '\0';
-  strncpy(mqtt_subscribe_set_format, spotlight_params_ram.mqtt_topic,
-          strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_subscribe_set_format, PSTR(MQTT_SUBSCRIBE_SET_FORMAT));
-
-  mqtt_strobo_topic =
-    malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_SUBSCRIBE_SET_STROBO_SUFFIX)) + 1);
-  mqtt_strobo_topic[0] = '\0';
-  strncpy(mqtt_strobo_topic, spotlight_params_ram.mqtt_topic,
-          strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_strobo_topic, PSTR(MQTT_SUBSCRIBE_SET_STROBO_SUFFIX));
-
-  mqtt_will_topic =
-    malloc(strlen(spotlight_params_ram.mqtt_topic) +
-           strlen_P(PSTR(MQTT_WILL_TOPIC_SUFFIX)) + 1);
-  mqtt_will_topic[0] = '\0';
-  strncpy(mqtt_will_topic, spotlight_params_ram.mqtt_topic,
-          strlen(spotlight_params_ram.mqtt_topic) + 1);
-  strcat_P(mqtt_will_topic, PSTR(MQTT_WILL_TOPIC_SUFFIX));
-
+  // Generate MQTT client ID
   uint8_t *addr = uip_ethaddr.addr;
   mqtt_client_id[0] = '\0';
 
@@ -635,26 +593,25 @@ spotlight_netinit(void)
     addr[3], addr[4], addr[5]);
   SPOTDEBUG("MQTT Client-Id: %s", mqtt_client_id);
 
+  // Configure MQTT connection
+  uip_ipaddr(&mqtt_connection_config.target_ip,
+    spotlight_params_ram.mqtt_ip[0],
+    spotlight_params_ram.mqtt_ip[1],
+    spotlight_params_ram.mqtt_ip[2],
+    spotlight_params_ram.mqtt_ip[3]);
+
+  mqtt_connection_config.user = spotlight_params_ram.mqtt_user;
+  mqtt_connection_config.pass = spotlight_params_ram.mqtt_pass;
   mqtt_connection_config.client_id = mqtt_client_id;
   mqtt_connection_config.will_topic = mqtt_will_topic;
   mqtt_connection_config.will_message = MQTT_WILL_MESSAGE_OFFLINE;
-  mqtt_connection_config.will_message_length =
-    sizeof(MQTT_WILL_MESSAGE_OFFLINE) - 1;
-
+  mqtt_connection_config.will_message_length = sizeof(MQTT_WILL_MESSAGE_OFFLINE) - 1;
   mqtt_set_connection_config(&mqtt_connection_config);
 
-  //Connect to dmx-storage
+  // Connect to DMX storage
   dmx_conn_id = dmx_storage_connect(CONF_ARTNET_OUTUNIVERSE);
-  if (dmx_conn_id != -1)
-  {
-    dmx_connected = true;
-    SPOTDEBUG("Connection to dmx-storage established! id:%d", dmx_conn_id);
-  }
-  else
-  {
-    dmx_connected = false;
-    SPOTDEBUG("Connection to dmx-storage couldn't be established!");
-  }
+  dmx_connected = (dmx_conn_id != -1);
+  SPOTDEBUG("Connection to dmx-storage %s! id:%d", dmx_connected ? "established" : "couldn't be established", dmx_conn_id);
 }
 
 void
