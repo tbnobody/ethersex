@@ -237,30 +237,6 @@ static void rgbToHsv(spotlight_rgb_color_t rgb, spotlight_hsv_color_t* hsv)
     hsv->v = v;
 }
 
-void set_channel_random(uint8_t dest)
-{
-    spotlight_hsv_color_t hsv;
-    if (dest > 0) {
-        rgbToHsv(channels[dest - 1].current_color, &hsv);
-        hsv.s = 1;
-        if (hsv.v < 0.1 || hsv.v > 0.9) {
-            hsv.v = 1;
-        }
-        hsv.h = (double)rand() / (double)RAND_MAX;
-        hsvToRgb(hsv, &channels[dest - 1].target_color);
-    } else {
-        for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
-            rgbToHsv(channels[i].current_color, &hsv);
-            hsv.s = 1;
-            if (hsv.v < 0.1 || hsv.v > 0.9) {
-                hsv.v = 1;
-            }
-            hsv.h = (double)rand() / (double)RAND_MAX;
-            hsvToRgb(hsv, &channels[i].target_color);
-        }
-    }
-}
-
 void set_channel_mode(uint8_t dest, uint8_t mode, bool retained)
 {
     uint8_t new_mode = (mode == 1) ? SPOTLIGHT_MODE_FADE : SPOTLIGHT_MODE_NORMAL;
@@ -318,6 +294,30 @@ void set_channel_basecolor(uint8_t dest, uint8_t r, uint8_t g, uint8_t b, bool r
         for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
             channels[i].base_color = (spotlight_rgb_color_t) { r, g, b };
             channels[i].sendUpdate = SPOTLIGHT_UPDATE;
+        }
+    }
+}
+
+void set_channel_random(uint8_t dest)
+{
+    spotlight_rgb_color_t rgb;
+    spotlight_hsv_color_t hsv;
+
+    hsv.s = 1;
+
+    if (dest > 0) {
+        hsv.v = (double)channels[dest - 1].brightness / 255;
+        hsv.h = (double)rand() / (double)RAND_MAX;
+        hsvToRgb(hsv, &rgb);
+        set_channel_basecolor(dest, rgb.r, rgb.g, rgb.b, false);
+        dim_channel_color(dest, false);
+    } else {
+        hsv.v = 1;
+        for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
+            hsv.h = (double)rand() / (double)RAND_MAX;
+            hsvToRgb(hsv, &rgb);
+            set_channel_basecolor(i + 1, rgb.r, rgb.g, rgb.b, false);
+            dim_channel_color(i + 1, false);
         }
     }
 }
