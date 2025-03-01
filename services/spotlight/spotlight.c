@@ -71,6 +71,8 @@ char* mqtt_subscribe_set_strobo_topic;
 char* mqtt_subscribe_set_format;
 
 int8_t timer_color = 0;
+int8_t timer_bcolor = 0;
+int8_t timer_brightness = 0;
 int8_t timer_mode = 0;
 int8_t timer_switch = 0;
 int8_t timer_random = 0;
@@ -356,10 +358,22 @@ void spotlight_subscribe_color()
     }
     SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_color_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_color_topic);
+}
 
+void spotlight_subscribe_bcolor()
+{
+    if (!mqtt_is_connected()) {
+        return;
+    }
     SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_bcolor_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_bcolor_topic);
+}
 
+void spotlight_subscribe_brightness()
+{
+    if (!mqtt_is_connected()) {
+        return;
+    }
     SPOTDEBUG("MQTT Subscribe: %s", mqtt_subscribe_set_brightness_topic);
     mqtt_construct_subscribe_packet(mqtt_subscribe_set_brightness_topic);
 }
@@ -400,15 +414,19 @@ spotlight_connack_cb(void)
 {
     // This callback will be executed when broker connection is established
     scheduler_delete_timer(timer_color);
+    scheduler_delete_timer(timer_bcolor);
+    scheduler_delete_timer(timer_brightness);
     scheduler_delete_timer(timer_mode);
     scheduler_delete_timer(timer_switch);
     scheduler_delete_timer(timer_random);
 
     // Bad hack to allow sending the packages. If done all at once it crashes
     timer_color = scheduler_add_oneshot_timer(spotlight_subscribe_color, 1 * CONF_MTICKS_PER_SEC);
-    timer_mode = scheduler_add_oneshot_timer(spotlight_subscribe_mode, 2 * CONF_MTICKS_PER_SEC);
-    timer_switch = scheduler_add_oneshot_timer(spotlight_subscribe_switch, 3 * CONF_MTICKS_PER_SEC);
-    timer_random = scheduler_add_oneshot_timer(spotlight_subscribe_random, 4 * CONF_MTICKS_PER_SEC);
+    timer_bcolor = scheduler_add_oneshot_timer(spotlight_subscribe_bcolor, 2 * CONF_MTICKS_PER_SEC);
+    timer_brightness = scheduler_add_oneshot_timer(spotlight_subscribe_brightness, 3 * CONF_MTICKS_PER_SEC);
+    timer_mode = scheduler_add_oneshot_timer(spotlight_subscribe_mode, 4 * CONF_MTICKS_PER_SEC);
+    timer_switch = scheduler_add_oneshot_timer(spotlight_subscribe_switch, 5 * CONF_MTICKS_PER_SEC);
+    timer_random = scheduler_add_oneshot_timer(spotlight_subscribe_random, 6 * CONF_MTICKS_PER_SEC);
 
     send_online_lwt = true;
 }
