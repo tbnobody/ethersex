@@ -1,3 +1,46 @@
+Changes in this fork
+====================
+
+## Description
+
+Control RGB leds connected to a PCA9685 PWM controller.
+
+## Pre-Requirements
+
+```bash
+ apt install gcc gcc-avr avr-libc binutils-avr m4 gawk libncurses5-dev make dialog git-core avrdude
+```
+
+## Download sources
+
+```bash
+git clone http://github.com/tbnobody/ethersex.git
+```
+
+## Compile and upload
+
+Type
+
+```bash
+make menuconfig
+```
+
+select `Load a Default Configuration` and select between `EtherLed (Debug)` or `EtherLed (No Debug)`. Save and exit.
+
+Run
+
+```bash
+make
+```
+
+to compile and 
+
+```bash
+make program
+```
+
+to flash.
+
 About Ethersex
 ==============
 Ethersex, originally developed to provide an alternative firmware for the [etherrape hardware](http://www.lochraster.org/etherrape),
