@@ -466,8 +466,8 @@ static void spotlight_publish_cb(char const* topic, uint16_t topic_length, void 
             SPOTDEBUG("MQTT set color:%d,%d,%d", r, g, b);
             set_channel_color(dest, r, g, b, retained);
             set_channel_basecolor(dest, r, g, b, retained);
-            set_channel_status(dest, 1, retained);
             set_channel_brightness(dest, 255, retained);
+            set_channel_status(dest, (r > 0 && g > 0 && b > 0) ? 1 : 0, retained);
         } else {
             SPOTDEBUG("MQTT invalid color");
         }
