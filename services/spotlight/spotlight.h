@@ -42,7 +42,7 @@
 
 #define IPADDR_LEN sizeof(uip_ipaddr_t)
 
-#define SPOTLIGHT_VALUESIZE 16
+#define SPOTLIGHT_VALUESIZE 32
 #define SPOTLIGHT_TOPICSIZE 64
 
 enum spotlight_update {
