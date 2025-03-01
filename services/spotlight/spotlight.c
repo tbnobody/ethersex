@@ -729,12 +729,15 @@ void spotlight_process(void)
     }
 
     for (uint8_t i = 0; i < SPOTLIGHT_CHANNELS; i++) {
-        channels[i].update = SPOTLIGHT_NOUPDATE;
-        if (memcmp(&channels[i].current_color, &channels[i].target_color, sizeof(spotlight_rgb_color_t)) != 0) {
-            channels[i].update = SPOTLIGHT_UPDATE;
-            channels[i].sendUpdate = SPOTLIGHT_UPDATE;
-            update = SPOTLIGHT_UPDATE;
+        
+        if (memcmp(&channels[i].current_color, &channels[i].target_color, sizeof(spotlight_rgb_color_t)) == 0) {
+            channels[i].update = SPOTLIGHT_NOUPDATE;
+            continue;
         }
+
+        channels[i].update = SPOTLIGHT_UPDATE;
+        channels[i].sendUpdate = SPOTLIGHT_UPDATE;
+        update = SPOTLIGHT_UPDATE;
 
         switch (channels[i].mode) {
         case SPOTLIGHT_MODE_NORMAL:
