@@ -250,6 +250,7 @@ CONF_RFM12_IP4_NETMASK="255.255.255.0"
 # USB_MOUSE_SUPPORT is not set
 # USB_MOUSE_SEQUENCE_SUPPORT is not set
 # USB_NET_SUPPORT is not set
+# DEBUG_USB_PROTOCOL is not set
 # DEBUG_USB_HID_KEYBOARD is not set
 # DEBUG_USB_HID_MOUSE is not set
 # ZBUS_SUPPORT is not set
@@ -405,6 +406,7 @@ GLCD_MONO_NONE=y
 # GLCD_MONO_HX1230_96x68_SPI is not set
 # GLCD_MONO_IL3820_296x128_SPI is not set
 # GLCD_MONO_IST3020_ERC19264_SPI is not set
+# GLCD_MONO_IST7920_128X128_SPI is not set
 # GLCD_MONO_LD7032_60x32_I2C is not set
 # GLCD_MONO_LD7032_60x32_SPI is not set
 # GLCD_MONO_LS013B7DH03_128x128_SPI is not set
@@ -426,12 +428,14 @@ GLCD_MONO_NONE=y
 # GLCD_MONO_SSD1305_128x32_I2C is not set
 # GLCD_MONO_SSD1305_128x32_SPI is not set
 # GLCD_MONO_SSD1106_48x64_SPI is not set
-# GLCD_MONO_SSD1306_64x32_SPI is not set
 # GLCD_MONO_SSD1306_64x32_I2C is not set
-# GLCD_MONO_SSD1306_64x48_SPI is not set
+# GLCD_MONO_SSD1306_64x32_SPI is not set
 # GLCD_MONO_SSD1306_64x48_I2C is not set
-# GLCD_MONO_SSD1306_96x16_SPI is not set
+# GLCD_MONO_SSD1306_64x48_SPI is not set
+# GLCD_MONO_SSD1306_72x40_I2C is not set
+# GLCD_MONO_SSD1306_72x40_SPI is not set
 # GLCD_MONO_SSD1306_96x16_I2C is not set
+# GLCD_MONO_SSD1306_96x16_SPI is not set
 # GLCD_MONO_SSD1306_128x64_I2C is not set
 # GLCD_MONO_SSD1306_128x64_SPI is not set
 # GLCD_MONO_SSD1309_128x64_I2C is not set
@@ -447,6 +451,8 @@ GLCD_MONO_NONE=y
 # GLCD_MONO_SSD1329_128x96_SPI is not set
 # GLCD_MONO_SSD1606_172x72_SPI is not set
 # GLCD_MONO_SSD1607_200x200_SPI is not set
+# GLCD_MONO_ST7528_NHD_C160100_I2C is not set
+# GLCD_MONO_ST7528_NHD_C160100_SPI is not set
 # GLCD_MONO_ST75256_JLX172104_I2C is not set
 # GLCD_MONO_ST75256_JLX172104_SPI is not set
 # GLCD_MONO_ST75256_JLX256128_I2C is not set
@@ -489,6 +495,7 @@ GLCD_MONO_NONE=y
 # GLCD_HX1230_96x68_SPI_SUPPORT is not set
 # GLCD_IL3820_296x128_SUPPORT is not set
 # GLCD_IST3020_ERC19264_SUPPORT is not set
+# GLCD_IST7920_128X128_SUPPORT is not set
 # GLCD_LD7032_60x32_SUPPORT is not set
 # GLCD_LS013B7DH03_128x128_SUPPORT is not set
 # GLCD_MAX7219_32x8_SUPPORT is not set
@@ -505,6 +512,7 @@ GLCD_MONO_NONE=y
 # GLCD_SSD1106_48x64_SUPPORT is not set
 # GLCD_SSD1306_64x32_SUPPORT is not set
 # GLCD_SSD1306_64x48_SUPPORT is not set
+# GLCD_SSD1306_72x40_SUPPORT is not set
 # GLCD_SSD1306_96x16_SUPPORT is not set
 # GLCD_SSD1306_128x64_SUPPORT is not set
 # GLCD_SSD1309_128x64_SUPPORT is not set
@@ -516,6 +524,7 @@ GLCD_MONO_NONE=y
 # GLCD_SSD1329_128x96_SUPPORT is not set
 # GLCD_SSD1606_172x72_SUPPORT is not set
 # GLCD_SSD1607_200x200_SUPPORT is not set
+# GLCD_ST7528_NHD_C160100_SUPPORT is not set
 # GLCD_ST75256_JLX172104_SUPPORT is not set
 # GLCD_ST75256_JLX256128_SUPPORT is not set
 # GLCD_ST75256_JLX25664_SUPPORT is not set
@@ -665,6 +674,7 @@ CONF_RC5_SERVER="192.168.100.3"
 # IRMP_SUPPORT_DENON_PROTOCOL is not set
 # IRMP_SUPPORT_FAN_PROTOCOL is not set
 # IRMP_SUPPORT_FDC_PROTOCOL is not set
+# IRMP_SUPPORT_GREE_PROTOCOL is not set
 # IRMP_SUPPORT_GRUNDIG_PROTOCOL is not set
 # IRMP_SUPPORT_IR60_PROTOCOL is not set
 # IRMP_SUPPORT_JVC_PROTOCOL is not set
@@ -674,6 +684,7 @@ CONF_RC5_SERVER="192.168.100.3"
 # IRMP_SUPPORT_LGAIR_PROTOCOL is not set
 # IRMP_SUPPORT_MATSUSHITA_PROTOCOL is not set
 # IRMP_SUPPORT_MERLIN_PROTOCOL is not set
+# IRMP_SUPPORT_METZ_PROTOCOL is not set
 # IRMP_SUPPORT_MITSU_HEAVY_PROTOCOL is not set
 # IRMP_SUPPORT_NEC_PROTOCOL is not set
 # IRMP_SUPPORT_NEC16_PROTOCOL is not set
@@ -682,6 +693,7 @@ CONF_RC5_SERVER="192.168.100.3"
 # IRMP_SUPPORT_NIKON_PROTOCOL is not set
 # IRMP_SUPPORT_NOKIA_PROTOCOL is not set
 # IRMP_SUPPORT_NUBERT_PROTOCOL is not set
+# IRMP_SUPPORT_ONKYO_PROTOCOL is not set
 # IRMP_SUPPORT_ORTEK_PROTOCOL is not set
 # IRMP_SUPPORT_PANASONIC_PROTOCOL is not set
 # IRMP_SUPPORT_PENTAX_PROTOCOL is not set
@@ -690,6 +702,7 @@ CONF_RC5_SERVER="192.168.100.3"
 # IRMP_SUPPORT_RC6_PROTOCOL is not set
 # IRMP_SUPPORT_RC6A_PROTOCOL is not set
 # IRMP_SUPPORT_RCCAR_PROTOCOL is not set
+# IRMP_SUPPORT_RCII_PROTOCOL is not set
 # IRMP_SUPPORT_RCMM12_PROTOCOL is not set
 # IRMP_SUPPORT_RCMM24_PROTOCOL is not set
 # IRMP_SUPPORT_RCMM32_PROTOCOL is not set
@@ -890,7 +903,7 @@ CONF_HTTPLOG_PATH="/httplog/httplog.php"
 # CONF_HTTPLOG_INCLUDE_TIMESTAMP is not set
 # CONF_HTTPLOG_INCLUDE_UUID is not set
 CONF_HTTPLOG_UUID="12345678-9ABC-DEF0-1234-56789ABCDEF0"
-HTTPLOG_BUFFER_LEN=140
+HTTPLOG_QUEUE_LEN=10
 # DEBUG_HTTPLOG is not set
 # IRC_SUPPORT is not set
 CONF_IRC_IP="192.168.23.254"
@@ -904,8 +917,13 @@ CONF_IRC_REALNAME="Ethersex Wollmilchsau"
 # MDNS_SD_SUPPORT is not set
 # MODBUS_SUPPORT is not set
 MQTT_SUPPORT=y
-MQTT_CALLBACK_SLOTS=1
-# MQTT_STATIC_CONF is not set
+MQTT_CONF_SERVER_IP="192.168.23.254"
+MQTT_CONF_CLIENTID="ethersex"
+# MQTT_CONF_SUPPLY_USERNAME is not set
+# MQTT_CONF_SUPPLY_WILL is not set
+MQTT_CONF_PREFIX="ethersex"
+# MQTT_DYNAMIC_CALLBACKS is not set
+MQTT_DYNAMIC_CALLBACK_SLOTS=1
 # MQTT_DEBUG is not set
 # MQTT_PARSE_DEBUG is not set
 # MYSQL_SUPPORT is not set
@@ -974,6 +992,7 @@ CONF_SMS77_TYPE="basicplus"
 # DEBUG_SMS77 is not set
 # SYSLOG_SUPPORT is not set
 CONF_SYSLOG_SERVER="192.168.23.73"
+SYSLOG_QUEUE_LEN=10
 # TWITTER_SUPPORT is not set
 CONF_TWITTER_SERVICE="identi.ca"
 CONF_TWITTER_API="/api"
@@ -1308,3 +1327,155 @@ TANKLEVEL_RAISE_TIME=50
 TANKLEVEL_HOLD_TIME=20
 # RFM12_SUPPORT is not set
 IPV4_SUPPORT=y
+
+#
+# AVRDUDE configuration
+#
+# _2232hio is not set
+# _4232h is not set
+# adafruit_gemma is not set
+# arduino is not set
+# _arduino_ft232r is not set
+# arduino_gemma is not set
+# arduinoisp is not set
+# arduinoisporg is not set
+# atmelice is not set
+# atmelice_dw is not set
+# atmelice_isp is not set
+# atmelice_pdi is not set
+# atmelice_tpi is not set
+# atmelice_updi is not set
+# avr109 is not set
+# avr910 is not set
+# avr911 is not set
+# avrftdi is not set
+# avrisp is not set
+# avrisp2 is not set
+CONFIG_AVRDUDE_PROGRAMMER=avrispmkII
+avrispmkII=y
+# avrispv2 is not set
+# buspirate is not set
+# buspirate_bb is not set
+# butterfly is not set
+# butterfly_mk is not set
+# bwmega is not set
+# c232hm is not set
+# c2n232i is not set
+# dasa is not set
+# dasa3 is not set
+# diecimila is not set
+# _digilent_hs2 is not set
+# dragon_dw is not set
+# dragon_hvsp is not set
+# dragon_isp is not set
+# dragon_jtag is not set
+# dragon_pdi is not set
+# dragon_pp is not set
+# _ehajo_isp is not set
+# flip1 is not set
+# flip2 is not set
+# ft2232h is not set
+# ft232h is not set
+# ft232r is not set
+# ft245r is not set
+# ft4232h is not set
+# iseavrprog is not set
+# jtag1 is not set
+# jtag1slow is not set
+# jtag2 is not set
+# jtag2avr32 is not set
+# jtag2dw is not set
+# jtag2fast is not set
+# jtag2isp is not set
+# jtag2pdi is not set
+# jtag2slow is not set
+# jtag2updi is not set
+# jtag3 is not set
+# jtag3dw is not set
+# jtag3isp is not set
+# jtag3pdi is not set
+# jtag3updi is not set
+# jtagkey is not set
+# jtagmkI is not set
+# jtagmkII is not set
+# jtagmkII_avr32 is not set
+# ktlink is not set
+# linuxspi is not set
+# lm3s811 is not set
+# mib510 is not set
+# micronucleus is not set
+# mkbutterfly is not set
+# nibobee is not set
+# _o_link is not set
+# openmoko is not set
+# pavr is not set
+# pickit2 is not set
+# pickit4 is not set
+# pickit4_isp is not set
+# pickit4_pdi is not set
+# pickit4_tpi is not set
+# pickit4_updi is not set
+# pkobn_updi is not set
+# ponyser is not set
+# powerdebugger is not set
+# powerdebugger_dw is not set
+# powerdebugger_isp is not set
+# powerdebugger_pdi is not set
+# powerdebugger_tpi is not set
+# powerdebugger_updi is not set
+# serialupdi is not set
+# siprog is not set
+# snap is not set
+# snap_isp is not set
+# snap_pdi is not set
+# snap_tpi is not set
+# snap_updi is not set
+# stk500 is not set
+# stk500hvsp is not set
+# stk500pp is not set
+# stk500v1 is not set
+# stk500v2 is not set
+# stk600 is not set
+# stk600hvsp is not set
+# stk600pp is not set
+# tc2030 is not set
+# teensy is not set
+# tigard is not set
+# ttl232r is not set
+# tumpa is not set
+# um232h is not set
+# uncompatino is not set
+# urclock is not set
+# usbasp is not set
+# _usbasp_clone is not set
+# usbtiny is not set
+# wiring is not set
+# xbee is not set
+# xplainedmini is not set
+# xplainedmini_dw is not set
+# xplainedmini_tpi is not set
+# xplainedmini_updi is not set
+# xplainedpro is not set
+# xplainedpro_pdi is not set
+# xplainedpro_updi is not set
+AVRDUDE_PROGRAMMER=avrispmkII
+CONFIG_AVRDUDE_PORT="usb"
+AVRDUDE_PORT=usb
+# CONFIG_AVRDUDE_VERBOSE is not set
+AVRDUDE_VERBOSE=-v
+# CONFIG_AVRDUDE_NO_VERIFY is not set
+# CONFIG_AVRDUDE_ERASE_COUNTER is not set
+# AVRDUDE_BITCLOCK_4 is not set
+CONFIG_AVRDUDE_BITCLOCK=AVRDUDE_BITCLOCK_1
+AVRDUDE_BITCLOCK_1=y
+# AVRDUDE_BITCLOCK_05 is not set
+# AVRDUDE_BITCLOCK_03 is not set
+AVRDUDE_BITCLOCK="-B 1"
+CONFIG_AVRDUDE_EXTRA_OPTIONS="-F"
+AVRDUDE_EXTRA_OPTIONS="-F"
+CONFIG_AVRDUDE_LFUSE=e6
+AVRDUDE_LFUSE=0xe6
+CONFIG_AVRDUDE_HFUSE=d1
+AVRDUDE_HFUSE=0xd1
+CONFIG_AVRDUDE_EFUSE=fd
+AVRDUDE_EFUSE=0xfd
