@@ -78,16 +78,17 @@ typedef struct
 {
     /* Current value, color and brightness */
     spotlight_rgb_color_t current_color;
+
     /* Target value, color and brightness */
     spotlight_rgb_color_t target_color;
 
     /* Base Color */
     spotlight_rgb_color_t base_color;
 
-    /* Brightness */
+    /* Brightness [0-255] */
     uint8_t brightness;
 
-    /* On/Off status */
+    /* On/Off status [0=Off; 1=On] */
     enum spotlight_status status;
 
     enum spotlight_mode mode;
