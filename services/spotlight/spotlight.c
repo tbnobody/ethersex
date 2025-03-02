@@ -532,6 +532,7 @@ static void spotlight_publish_cb(char const* topic, uint16_t topic_length, void 
     } else if (!strcmp_P(type, PSTR("rand")) && !retained) {
         SPOTDEBUG("MQTT set random");
         set_channel_random(dest);
+        set_channel_status(dest, 1, retained);
 
     } else {
         SPOTDEBUG("MQTT unknown command");
